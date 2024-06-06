@@ -1,8 +1,9 @@
-package com.yannqing.dockerdesktop.config;
+package com.wxjw.jwbigdata.config;
 
 
 
-import com.yannqing.dockerdesktop.utils.FastJsonRedisSerializer;
+
+import com.wxjw.jwbigdata.utils.FastJsonRedisSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;

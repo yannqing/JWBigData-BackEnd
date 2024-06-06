@@ -1,4 +1,4 @@
-package com.yannqing.dockerdesktop.vo;
+package com.wxjw.jwbigdata.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

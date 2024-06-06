@@ -1,7 +1,7 @@
-package com.yannqing.dockerdesktop.vo;
+package com.wxjw.jwbigdata.vo;
 
-
-import com.yannqing.dockerdesktop.domain.User;
+import com.wxjw.jwbigdata.domain.User;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,26 +13,13 @@ public class SecurityUser implements UserDetails {
 
     private List<SimpleGrantedAuthority> simpleGrantedAuthorities;
 
+    @Getter
     private final User user;
 
-    private final int role;
-
-    public SecurityUser(User user, int role) {
+    public SecurityUser(User user) {
         this.user = user;
-        this.role = role;
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public int getRole() {
-        return role;
-    }
-
-    public void setSimpleGrantedAuthorities(List<SimpleGrantedAuthority> simpleGrantedAuthorities) {
-        this.simpleGrantedAuthorities = simpleGrantedAuthorities;
-    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -53,21 +40,21 @@ public class SecurityUser implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return user.getAccount_no_expired()==1;
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return user.getAccount_no_locked()==1;
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return user.getCredentials_no_expired()==1;
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return user.getEnabled()==1;
+        return true;
     }
 }

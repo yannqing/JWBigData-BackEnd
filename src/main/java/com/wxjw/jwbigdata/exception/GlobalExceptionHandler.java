@@ -1,7 +1,7 @@
-package com.yannqing.dockerdesktop.exception;
+package com.wxjw.jwbigdata.exception;
 
-import com.yannqing.dockerdesktop.utils.ResultUtils;
-import com.yannqing.dockerdesktop.vo.BaseResponse;
+import com.wxjw.jwbigdata.utils.ResultUtils;
+import com.wxjw.jwbigdata.vo.BaseResponse;
 import io.lettuce.core.RedisConnectionException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public BaseResponse<Object> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException e,
-                                                      HttpServletRequest request) {
+                                                                    HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址 {},不支持 {} 请求", requestURI, e.getMethod());
         return ResultUtils.failure(e.getMessage());
@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public BaseResponse<Object> handleRedisConnectionFailureException(IllegalArgumentException e, HttpServletRequest request, HttpServletResponse response){
         log.error("参数错误：{}", e.getMessage());
-        return ResultUtils.failure("参数错误");
+        return ResultUtils.failure("参数错误->"+e.getMessage());
     }
 
     /**

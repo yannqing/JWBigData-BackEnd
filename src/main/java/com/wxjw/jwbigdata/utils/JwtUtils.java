@@ -1,4 +1,4 @@
-package com.yannqing.dockerdesktop.utils;
+package com.wxjw.jwbigdata.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.auth0.jwt.JWT;
@@ -14,7 +14,7 @@ import java.util.List;
 
 @Slf4j
 public class JwtUtils {
-    private static final String secret = "111111";
+    private static final String secret = "JWBigData-BackEnd";
     /**
      *  根据认证信息Authentication生成JWT token
      */
@@ -32,7 +32,7 @@ public class JwtUtils {
      * @return
      */
 
-    public static String token(String userInfo, List<String> authList){
+    public static String token(String userInfo, List<Integer> authList){
         return JWT.create()
                 .withExpiresAt(new Date(System.currentTimeMillis()+ 1000L * 60 * 60 * 3))  //设置过期时间:单位毫秒
                 .withClaim("userInfo",userInfo)

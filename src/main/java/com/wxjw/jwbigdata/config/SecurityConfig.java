@@ -1,13 +1,11 @@
-package com.yannqing.dockerdesktop.config;
+package com.wxjw.jwbigdata.config;
 
-
-
-import com.yannqing.dockerdesktop.common.Constant;
-import com.yannqing.dockerdesktop.security.filter.JwtAuthenticationTokenFilter;
-import com.yannqing.dockerdesktop.security.handler.MyLoginFailureHandler;
-import com.yannqing.dockerdesktop.security.handler.MyLoginSuccessHandler;
-import com.yannqing.dockerdesktop.security.handler.MyLogoutSuccessHandler;
-import com.yannqing.dockerdesktop.utils.RedisCache;
+import com.wxjw.jwbigdata.common.Constant;
+import com.wxjw.jwbigdata.security.filter.JwtAuthenticationTokenFilter;
+import com.wxjw.jwbigdata.security.handler.MyLoginFailureHandler;
+import com.wxjw.jwbigdata.security.handler.MyLoginSuccessHandler;
+import com.wxjw.jwbigdata.security.handler.MyLogoutSuccessHandler;
+import com.wxjw.jwbigdata.utils.RedisCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,7 +45,7 @@ public class SecurityConfig {
         //登录可以选择form表单登录，也可选择发送请求，写到controller中
         //form表单登录
         http.formLogin((login)->login.
-                loginProcessingUrl("/auth/login")
+                loginProcessingUrl("/login")
                 .successHandler(new MyLoginSuccessHandler(redisCache))
                 .failureHandler(new MyLoginFailureHandler())
         );
@@ -55,7 +53,7 @@ public class SecurityConfig {
 
         //设置退出logout过滤器
         http.logout((logout)->logout
-                .logoutUrl("/auth/logout")
+                .logoutUrl("/logout")
                 .logoutSuccessHandler(new MyLogoutSuccessHandler(redisCache))
         );
 

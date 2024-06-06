@@ -1,8 +1,8 @@
-package com.yannqing.dockerdesktop.utils;
+package com.wxjw.jwbigdata.utils;
 
 
-import com.yannqing.dockerdesktop.common.Code;
-import com.yannqing.dockerdesktop.vo.BaseResponse;
+import com.wxjw.jwbigdata.common.Code;
+import com.wxjw.jwbigdata.vo.BaseResponse;
 
 public class ResultUtils {
 

@@ -1,11 +1,9 @@
-package com.yannqing.dockerdesktop.service.impl;
+package com.wxjw.jwbigdata.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.yannqing.dockerdesktop.domain.User;
-import com.yannqing.dockerdesktop.mapper.PermissionsMapper;
-import com.yannqing.dockerdesktop.mapper.RoleMapper;
-import com.yannqing.dockerdesktop.mapper.UserMapper;
-import com.yannqing.dockerdesktop.vo.SecurityUser;
+import com.wxjw.jwbigdata.domain.User;
+import com.wxjw.jwbigdata.mapper.UserMapper;
+import com.wxjw.jwbigdata.vo.SecurityUser;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,11 +20,6 @@ public class SecurityUserDetailsServiceImpl implements UserDetailsService {
 
     @Resource
     private UserMapper userMapper;
-    @Resource
-    private PermissionsMapper permissionsMapper;
-
-    @Resource
-    private RoleMapper roleMapper;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -36,13 +29,7 @@ public class SecurityUserDetailsServiceImpl implements UserDetailsService {
         if (user == null) {
             throw new UsernameNotFoundException("用户不存在");
         }
-        //获取到用户的所有权限信息
-        List<String> permissions = permissionsMapper.queryPermissionsByUserId(user.getUser_id());
-        List<SimpleGrantedAuthority> authorities = permissions.stream().map(SimpleGrantedAuthority::new).toList();
-        //获取用户role角色
-        int rid = roleMapper.selectRoleByUserId(user.getUser_id());
-        SecurityUser securityUser = new SecurityUser(user,rid);
-        securityUser.setSimpleGrantedAuthorities(authorities);
-        return securityUser;
+
+        return new SecurityUser(user);
     }
 }

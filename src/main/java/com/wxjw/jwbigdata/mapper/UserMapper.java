@@ -1,7 +1,7 @@
-package com.yannqing.dockerdesktop.mapper;
+package com.wxjw.jwbigdata.mapper;
 
-import com.yannqing.dockerdesktop.domain.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.wxjw.jwbigdata.domain.User;
 
 /**
 * @author 67121

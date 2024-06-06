@@ -6,18 +6,18 @@
 
     <resultMap id="BaseResultMap" type="com.wxjw.jwbigdata.domain.User">
             <id property="id" column="id" jdbcType="INTEGER"/>
-            <result property="user_account" column="user_account" jdbcType="BIGINT"/>
+            <result property="userAccount" column="user_account" jdbcType="BIGINT"/>
             <result property="password" column="password" jdbcType="VARCHAR"/>
             <result property="username" column="username" jdbcType="VARCHAR"/>
-            <result property="department_id" column="department_id" jdbcType="INTEGER"/>
+            <result property="departmentId" column="department_id" jdbcType="INTEGER"/>
             <result property="position" column="position" jdbcType="VARCHAR"/>
             <result property="role" column="role" jdbcType="TINYINT"/>
             <result property="portrait" column="portrait" jdbcType="TINYINT"/>
             <result property="compare" column="compare" jdbcType="TINYINT"/>
             <result property="model" column="model" jdbcType="TINYINT"/>
-            <result property="created_user" column="created_user" jdbcType="INTEGER"/>
-            <result property="created_time" column="created_time" jdbcType="TIMESTAMP"/>
-            <result property="is_delete" column="is_delete" jdbcType="TINYINT"/>
+            <result property="createdUser" column="created_user" jdbcType="INTEGER"/>
+            <result property="createdTime" column="created_time" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="is_delete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">

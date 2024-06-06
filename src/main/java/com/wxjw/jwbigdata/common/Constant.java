@@ -1,4 +1,4 @@
-package com.yannqing.dockerdesktop.common;
+package com.wxjw.jwbigdata.common;
 
 import lombok.Data;
 import org.springframework.context.annotation.Configuration;
@@ -14,9 +14,9 @@ import java.util.List;
 public class Constant {
 
     public static String[] annos = {
-            "/auth/register",
-            "/auth/login",
-            "/auth/logout"
+            "/register",
+            "/login",
+            "/logout"
     };
 
     public static List<String> annosList = Arrays.asList(annos);

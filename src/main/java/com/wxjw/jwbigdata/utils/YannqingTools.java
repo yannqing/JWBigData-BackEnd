@@ -1,4 +1,4 @@
-package com.yannqing.dockerdesktop.utils;
+package com.wxjw.jwbigdata.utils;
 
 public class YannqingTools {
     public static boolean contains(String str,String ...args){

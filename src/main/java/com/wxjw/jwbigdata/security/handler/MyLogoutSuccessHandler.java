@@ -1,9 +1,9 @@
-package com.yannqing.dockerdesktop.security.handler;
+package com.wxjw.jwbigdata.security.handler;
 
 import cn.hutool.json.JSONUtil;
-import com.yannqing.dockerdesktop.common.Code;
-import com.yannqing.dockerdesktop.utils.RedisCache;
-import com.yannqing.dockerdesktop.utils.ResultUtils;
+import com.wxjw.jwbigdata.common.Code;
+import com.wxjw.jwbigdata.utils.RedisCache;
+import com.wxjw.jwbigdata.utils.ResultUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

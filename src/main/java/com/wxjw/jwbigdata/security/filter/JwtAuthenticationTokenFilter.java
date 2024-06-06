@@ -1,14 +1,14 @@
-package com.yannqing.dockerdesktop.security.filter;
+package com.wxjw.jwbigdata.security.filter;
 
 import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yannqing.dockerdesktop.common.Code;
-import com.yannqing.dockerdesktop.common.Constant;
-import com.yannqing.dockerdesktop.domain.User;
-import com.yannqing.dockerdesktop.utils.JwtUtils;
-import com.yannqing.dockerdesktop.utils.RedisCache;
-import com.yannqing.dockerdesktop.utils.ResultUtils;
-import com.yannqing.dockerdesktop.utils.YannqingTools;
+import com.wxjw.jwbigdata.common.Code;
+import com.wxjw.jwbigdata.common.Constant;
+import com.wxjw.jwbigdata.domain.User;
+import com.wxjw.jwbigdata.utils.JwtUtils;
+import com.wxjw.jwbigdata.utils.RedisCache;
+import com.wxjw.jwbigdata.utils.ResultUtils;
+import com.wxjw.jwbigdata.utils.YannqingTools;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
 
-    RedisCache redisCache;
+    private RedisCache redisCache;
 
     public JwtAuthenticationTokenFilter(RedisCache redisCache) {
         this.redisCache = redisCache;

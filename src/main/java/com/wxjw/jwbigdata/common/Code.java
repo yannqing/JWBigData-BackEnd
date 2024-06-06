@@ -1,4 +1,4 @@
-package com.yannqing.dockerdesktop.common;
+package com.wxjw.jwbigdata.common;
 
 public class Code {
 
