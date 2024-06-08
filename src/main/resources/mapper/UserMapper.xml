@@ -6,7 +6,7 @@
 
     <resultMap id="BaseResultMap" type="com.wxjw.jwbigdata.domain.User">
             <id property="id" column="id" jdbcType="INTEGER"/>
-            <result property="userAccount" column="user_account" jdbcType="BIGINT"/>
+            <result property="userAccount" column="user_account" jdbcType="VARCHAR"/>
             <result property="password" column="password" jdbcType="VARCHAR"/>
             <result property="username" column="username" jdbcType="VARCHAR"/>
             <result property="departmentId" column="department_id" jdbcType="INTEGER"/>

@@ -26,7 +26,7 @@ public class User implements Serializable {
      * 账户
      */
     @TableField(value = "user_account")
-    private Long userAccount;
+    private String userAccount;
 
     /**
      * 密码
@@ -99,6 +99,12 @@ public class User implements Serializable {
      */
     @TableField(value = "phone")
     private String phone;
+
+    /**
+     * 状态
+     */
+    @TableField(value = "status")
+    private Integer status;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

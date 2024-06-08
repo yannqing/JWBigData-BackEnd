@@ -23,7 +23,7 @@ public class UserAuthenticationTests {
     @Test
     void addUser() {
         User user = new User();
-        user.setUserAccount(1002L);
+        user.setUserAccount("1002");
         user.setPassword(passwordEncoder.encode("123456"));
         user.setUsername("test2");
         user.setDepartmentId(0);
