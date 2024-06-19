@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wxjw.jwbigdata.mapper.JwRuleMapper">
+
+    <resultMap id="BaseResultMap" type="com.wxjw.jwbigdata.domain.JwRule">
+            <id property="ruleId" column="rule_id" jdbcType="INTEGER"/>
+            <result property="ruleName" column="rule_name" jdbcType="VARCHAR"/>
+            <result property="description" column="description" jdbcType="VARCHAR"/>
+            <result property="sqlStatement" column="sql_statement" jdbcType="VARCHAR"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+            <result property="resultTable" column="result_table" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="INTEGER"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="isOn" column="is_on" jdbcType="TINYINT"/>
+            <result property="type" column="type" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        rule_id,rule_name,description,
+        sql_statement,note,result_table,
+        create_by,create_time,status,is_on,type
+    </sql>
+
+    <update id="createNewTable" parameterType="String">
+        CREATE TABLE ${tableName}
+            ${sqlStatement}
+
+    </update>
+
+    <select id="tableExist" parameterType="String" resultType="java.util.Map">
+        select * from information_schema.`TABLES` where TABLE_SCHEMA='jw' and TABLE_NAME=${tableName}
+    </select>
+
+    <select id="resultTable" parameterType="String" resultType="java.util.ArrayList">
+        select * from ${tableName}
+    </select>
+
+    <select id="resultDetail" parameterType="String" resultType="java.util.Map">
+        select * from ${tableName} where ${fieldName} = ${id}
+    </select>
+</mapper>
