@@ -20,7 +20,6 @@
         table_name,is_end,create_by,
         create_time,status
     </sql>
-
     <insert id="createTable" parameterType="map">
         create table ${tableName} (
         <foreach collection="columns" item="listItem" separator=",">
@@ -28,4 +27,9 @@
         </foreach>
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8
     </insert>
+
+    <select id="existTable" parameterType="String" resultType="Integer">
+        SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = #{tableName}
+    </select>
+
 </mapper>

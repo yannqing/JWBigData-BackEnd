@@ -17,6 +17,8 @@ import java.util.List;
 public interface FileInfoMapper extends BaseMapper<FileInfo> {
 
     void createTable(@Param("tableName")String tableName, @Param("columns") List<String> columns);
+
+    int existTable(String tableName);
 }
 
 

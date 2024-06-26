@@ -24,6 +24,7 @@ spring:
     configuration:
       map-underscore-to-camel-case: false
     global-config:
+      enable-sql-runner: true
       db-config:
         logic-delete-field: isDelete
         logic-delete-value: 1

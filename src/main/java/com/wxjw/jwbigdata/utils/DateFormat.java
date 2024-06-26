@@ -2,6 +2,8 @@ package com.wxjw.jwbigdata.utils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class DateFormat {
@@ -10,6 +12,17 @@ public class DateFormat {
         sdf.applyPattern("yyyy-MM-dd HH:mm:ss");
         Date date = new Date();
         return sdf.format(date);
+    }
+
+    public static String getFileTime() {
+        // 获取当前日期
+        LocalDate currentDate = LocalDate.now();
+
+        // 定义日期格式化模式
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        // 格式化日期
+        return currentDate.format(formatter);
     }
 
     public static String convertToCronExpression(String dateTimeString) {

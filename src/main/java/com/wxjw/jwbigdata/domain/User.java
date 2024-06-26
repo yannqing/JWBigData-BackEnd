@@ -1,6 +1,9 @@
 package com.wxjw.jwbigdata.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -88,8 +91,7 @@ public class User implements Serializable {
     /**
      * 是否删除：0未删除
      */
-    @TableLogic
-    @TableField(value = "isDelete")
+    @TableField(value = "is_delete")
     private Integer isDelete;
 
     /**
