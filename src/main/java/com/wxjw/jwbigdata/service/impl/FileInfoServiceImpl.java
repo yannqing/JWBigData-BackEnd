@@ -279,7 +279,42 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
 
     @Override
     public String[][] compareFiles(Integer userId, Integer[] fileIdArray, String[][] fieldArray, String[] saveFieldArray, String compareType) {
+        List<Set<Integer>> columnIndexes = new ArrayList<>();
+        for (int j = 0; j < fieldArray.length; j++) {
+            //获取主表
+            FileInfo mainFileInfo = fileInfoMapper.selectById(fileIdArray[0]);
+            List<String> mainColumnData = fileInfoMapper.selectColumns(mainFileInfo.getTableName(), fieldArray[j][0]);
 
+            for (int i = 1; i < fileIdArray.length; i++) {
+                Set<Integer> index;
+                index = new HashSet<>();
+                //获取其他表
+                FileInfo otherFileInfo = fileInfoMapper.selectById(fileIdArray[i]);
+                List<String> otherColumnData = fileInfoMapper.selectColumns(otherFileInfo.getTableName(), fieldArray[j][i]);
+                for (int k = 0; k < mainColumnData.size(); k++) {
+                    for (int l = 0; l < otherColumnData.size(); l++) {
+                        if (mainColumnData.get(k).equals(otherColumnData.get(l))) {
+                            index.add(l);
+                        }
+                    }
+                }
+                if (columnIndexes.size() < i) {
+                    columnIndexes.add(index);
+                }else {
+                    int finalI = i;
+                    index.forEach(key -> {
+                        columnIndexes.get(finalI - 1).add(key);
+                    });
+                }
+            }
+        }
+
+
+        if (compareType.equals("正向")) {
+
+        }else {
+
+        }
         return new String[0][];
     }
 }

@@ -14,10 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Repeat;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SpringBootTest
 public class TestExcel {
@@ -51,9 +48,8 @@ public class TestExcel {
 //        List<Map<String, String>> userByPosition = fileInfoMapper.getByPosition(1, 2, "28a9652ecd0a4dc8bb7c019edb29ae1e");
 //        System.out.println(userByPosition);
 
-        String[] column = Arrays.asList("date", "wei").stream().toArray(String[]::new);
-
-        fileInfoService.queryFile(1, 154, column, "4月10日");
+        List<Set<String>> columns = new ArrayList<>();
+        System.out.println(columns.get(1));
     }
 
     public static void main(String[] args) {
