@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.toolkit.SqlRunner;
 import com.wxjw.jwbigdata.domain.FileInfo;
 import com.wxjw.jwbigdata.mapper.FileInfoMapper;
+import com.wxjw.jwbigdata.mapper.OperationMapper;
 import com.wxjw.jwbigdata.utils.DateFormat;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,15 +28,17 @@ public class ExcelListener extends AnalysisEventListener<Map<Integer, String>> {
     private final String fileName;
     private final Integer createdUser;
     private final FileInfoMapper fileInfoMapper;
+    private final OperationMapper operationMapper;
     private Integer headSize;
     private Map<Integer, String> headData;
     private String tableName;
 
-    public ExcelListener(Integer role, String fileName,Integer createdUser, FileInfoMapper fileInfoMapper) {
+    public ExcelListener(Integer role, String fileName,Integer createdUser, FileInfoMapper fileInfoMapper, OperationMapper operationMapper) {
         this.role = role;
         this.fileName = fileName;
         this.createdUser = createdUser;
         this.fileInfoMapper = fileInfoMapper;
+        this.operationMapper = operationMapper;
     }
 
     /**
@@ -100,16 +103,16 @@ public class ExcelListener extends AnalysisEventListener<Map<Integer, String>> {
             }
             fileInfoMapper.insert(fileInfo);
         }
-        //3. 创建表格 TODO 插入数据
-        String uuid = UUID.randomUUID().toString();
-        tableName = "qwe";
+        //3. 创建表格
+        String uuid = UUID.randomUUID().toString().replace("-","");
+        tableName = uuid;
         fileInfoMapper.createTable(tableName, columns);
         log.info("创建表格{}成功", fileName+ DateFormat.getFileTime());
         //4. 新建表格信息同步到file_info中
         FileInfo parentFile = fileInfoMapper.selectOne(new QueryWrapper<FileInfo>().eq("file_name", fileName + fileTime));
         String sheetName = context.readSheetHolder().getSheetName();
         FileInfo fileInfo = new FileInfo();
-        fileInfo.setParentId(parentFile.getParentId());
+        fileInfo.setParentId(parentFile.getId());
         fileInfo.setFileName(sheetName);
         fileInfo.setTableName(uuid);
         fileInfo.setIsEnd(1);
@@ -136,33 +139,18 @@ public class ExcelListener extends AnalysisEventListener<Map<Integer, String>> {
     private void saveData() {
         log.info("{}条数据，开始存储数据库！", cachedDataList.size());
         insertMysql(headData, tableName, cachedDataList);
+        cachedDataList.clear();
         log.info("存储数据库成功！");
     }
 
 
     public String insertMysql(Map<Integer, String> heads, String tableName, List<Map<Integer, String>> columns) {
-        StringBuilder sql = new StringBuilder("insert into " + tableName + " (");
-        for(Map.Entry<Integer, String> entry : heads.entrySet()) {
-            sql.append(entry.getValue());
-            sql.append(", ");
-        }
-        for(Map<Integer, String> entry : cachedDataList) {
-            sql.replace(sql.length() - 2, sql.length() - 1, ") values (");
-            int index = 0;
-            for(Map.Entry<Integer, String> map : entry.entrySet()) {
-                if (map.getKey() == index++) {
-                    sql.append(map.getValue() + ", ");
-                } else {
-                    sql.append(null + ", ");
-                }
-            }
-            sql.replace(sql.length() - 2, sql.length() - 1, ");");
-            boolean insert = SqlRunner.db().insert(sql.toString());
-            if (insert) {
-                log.info("插入一条数据成功");
-            }else {
-                log.info("插入一条数据失败");
-            }
+        List<String> header = heads.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList());
+
+        for (int i = 0; i < columns.size(); i++) {
+            List<String> column = columns.get(i).entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList());
+            operationMapper.dynamicInsert(tableName, header, column);
+            log.info("插入一条数据：{}", column);
         }
 
         return null;

@@ -131,27 +131,30 @@ public class FileController {
     }
 
     /**
-     * 检索内容 TODO
+     * 检索内容 ok
      * @param userId
-     * @param fileIdArray
+     * @param fileId
      * @param columnArray
      * @param keyWord
      * @return
      */
     @PostMapping("/queryFile")
-    public BaseResponse<Object> queryFile(Integer userId, Integer[] fileIdArray, String[] columnArray, String keyWord) {
-        return null;
+    public BaseResponse<String[][]> queryFile(Integer userId, Integer fileId, String[] columnArray, String keyWord) {
+        String[][] data = fileInfoService.queryFile(userId, fileId, columnArray, keyWord);
+
+        return ResultUtils.success(Code.SUCCESS, data, "检索数据成功！");
     }
 
     /**
-     * 获取比对文件字段 TODO
+     * 获取比对文件字段 ok
      * @param userId
      * @param fileIdArray
      * @return
      */
     @PostMapping("/getFields")
     public BaseResponse<Object> getFields(Integer userId, Integer[] fileIdArray) {
-        return null;
+        String[][] data = fileInfoService.getFields(userId, fileIdArray);
+        return ResultUtils.success(Code.SUCCESS, data, "获取比对文件字段成功！");
     }
 
     /**
@@ -159,13 +162,15 @@ public class FileController {
      * @param userId
      * @param fileIdArray 要比对的文件
      * @param fieldArray 选中的字段矩阵，二维矩阵
-     * @param saveFieldArrat 结果文件中保存的字段列表
+     * @param saveFieldArray 结果文件中保存的字段列表
      * @param compareType 比对方式，正向或反向
      * @return
      */
     @PostMapping("/compareFiles")
-    public BaseResponse<Object> compareFiles(Integer userId, Integer[] fileIdArray, String[] fieldArray, String[] saveFieldArrat, String compareType) {
-        return null;
+    public BaseResponse<Object> compareFiles(Integer userId, Integer[] fileIdArray, String[][] fieldArray, String[] saveFieldArray, String compareType) {
+        String[][] data = fileInfoService.compareFiles(userId, fileIdArray, fieldArray, saveFieldArray, compareType);
+
+        return ResultUtils.success(Code.SUCCESS, data, "比对文件成功！");
     }
 
 

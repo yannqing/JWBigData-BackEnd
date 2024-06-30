@@ -20,15 +20,17 @@ import com.wxjw.jwbigdata.vo.FileVo.OnlineFileVo;
 import com.wxjw.jwbigdata.vo.FileVo.TreeVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +50,10 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     private JwTableMapper jwTableMapper;
     @Autowired
     private OperationMapper operationMapper;
+    @Resource
+    private OperationServiceImpl operationService;
+    @Autowired
+    private DataSource dataSource;
 
     @Override
     public void uploadFile(MultipartFile file, String fileName, String fileType, Integer userId) throws IOException {
@@ -60,7 +66,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             throw new IllegalArgumentException("上传文件为空！");
         }
         //读取excel
-        EasyExcel.read(file.getInputStream(), new ExcelListener(loginUser.getRole(), fileName, userId, fileInfoMapper)).sheet().doRead();
+        EasyExcel.read(file.getInputStream(), new ExcelListener(loginUser.getRole(), fileName, userId, fileInfoMapper, operationMapper)).doReadAll();
     }
 
     @Override
@@ -220,6 +226,61 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             onlineFiles.add(onlineFileVo);
         }
         return onlineFiles;
+    }
+
+
+    @Override
+    public String[][] queryFile(Integer userId, Integer fileId, String[] columnArray, String keyWord) {
+        FileInfo fileInfo = fileInfoMapper.selectById(fileId);
+
+        String columnName = columnArray[0];
+
+        Set<Integer> rowIndex = new HashSet<>();
+
+        for (String s : columnArray) {
+            List<String> columnData = fileInfoMapper.selectColumns(fileInfo.getTableName(), s);
+            for (int j = 0; j < columnData.size(); j++) {
+                if (columnData.get(j).equals(keyWord)) {
+                    rowIndex.add(j);
+                }
+            }
+        }
+        String[][] res = new String[rowIndex.size() + 1][];
+
+        List<String> tableColumns = fileInfoMapper.getTableColumns(fileInfo.getTableName());
+        String[] column = tableColumns.toArray(String[]::new);
+
+        res[0] = column;
+        int index = 0;
+        for(Integer row : rowIndex) {
+            List<Map<String, String>> byPosition = fileInfoMapper.getByPosition(1, row, fileInfo.getTableName());
+            for (Map<String, String> stringStringMap : byPosition) {
+                List<String> arr = new ArrayList<>();
+                for (int j = 0; j < res[0].length; j++) {
+                    arr.add(stringStringMap.get(res[0][j]));
+                }String[] array = arr.stream().toArray(String[]::new);
+                res[++index] = array;
+            }
+        }
+        return res;
+    }
+
+    @Override
+    public String[][] getFields(Integer userId, Integer[] fileIdArray) {
+        String[][] fields = new String[fileIdArray.length][];
+        for (int i = 0; i < fileIdArray.length; i++) {
+            FileInfo fileInfo = fileInfoMapper.selectById(fileIdArray[i]);
+            List<String> tableColumns = fileInfoMapper.getTableColumns(fileInfo.getTableName());
+            String[] tableColumnsArray = tableColumns.toArray(String[]::new);
+            fields[i] = tableColumnsArray;
+        }
+        return fields;
+    }
+
+    @Override
+    public String[][] compareFiles(Integer userId, Integer[] fileIdArray, String[][] fieldArray, String[] saveFieldArray, String compareType) {
+
+        return new String[0][];
     }
 }
 

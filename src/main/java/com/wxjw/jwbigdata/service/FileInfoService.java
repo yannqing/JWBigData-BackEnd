@@ -30,4 +30,10 @@ public interface FileInfoService extends IService<FileInfo> {
     List<byte[]> exportFile(Integer userId, Integer[] fileIdArray);
 
     List<OnlineFileVo> getOnlineFiles(Integer userId);
+
+    String[][] queryFile(Integer userId, Integer fileId, String[] columnArray, String keyWord);
+
+    String[][] getFields(Integer userId, Integer[] fileIdArray);
+
+    String[][] compareFiles(Integer userId, Integer[] fileIdArray, String[][] fieldArray, String[] saveFieldArray, String compareType);
 }

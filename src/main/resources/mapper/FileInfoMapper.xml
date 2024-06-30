@@ -21,7 +21,7 @@
         create_time,status
     </sql>
     <insert id="createTable" parameterType="map">
-        create table ${tableName} (
+        create table `${tableName}` (
         <foreach collection="columns" item="listItem" separator=",">
             ${listItem} varchar(255)
         </foreach>
@@ -30,6 +30,11 @@
 
     <select id="existTable" parameterType="String" resultType="Integer">
         SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = #{tableName}
+    </select>
+
+    <select id = "selectColumns" parameterType="map" resultType="String">
+        select ${columns}
+        from ${tableName}
     </select>
 
 </mapper>
