@@ -40,20 +40,27 @@ public class TestExcel {
 
     @Test
     public void testIsExitsTable() {
-//        String[] columnName = {"date"};
-//        fileInfoService.queryFile(0, 154, columnName, "4月16日");
-//        List<String> jw = fileInfoMapper.getTableColumns("28a9652ecd0a4dc8bb7c019edb29ae1e");
-//        System.out.println(jw);
-
-//        List<Map<String, String>> userByPosition = fileInfoMapper.getByPosition(1, 2, "28a9652ecd0a4dc8bb7c019edb29ae1e");
-//        System.out.println(userByPosition);
-
-        List<Set<String>> columns = new ArrayList<>();
-        System.out.println(columns.get(1));
+        Integer[] fileId = new Integer[]{153, 151, 149};
+        String[][] fieldArray = new String[][]{
+                {"date", "date", "wei"},
+                {"yang", "she", "wei"},
+                {"wang", "zeng", "zhang"}
+        };
+        boolean[][] saveFieldArray = new boolean[3][];
+        boolean[] saveField1 = new boolean[]{true, false, true, false, true, false, true};
+        boolean[] saveField2 = new boolean[]{true, false, true, false, true, false, true};
+        boolean[] saveField3 = new boolean[]{true, false, true, false, true, false, true};
+        saveFieldArray[0] = saveField1;
+        saveFieldArray[1] = saveField2;
+        saveFieldArray[2] = saveField3;
+        fileInfoService.compareFiles(1, fileId, fieldArray, saveFieldArray, "正向");
     }
 
     public static void main(String[] args) {
 //        List<Map<String, Object>> maps = SqlRunner.selectList("select * from file_info");
-
+        String[][] result = new String[2 + 1][];
+        List<String> tableColumns = Arrays.asList("table", "qwe", "column");
+        result[0] = tableColumns.toArray(new String[]{});
+        System.out.println(Arrays.deepToString(result));
     }
 }

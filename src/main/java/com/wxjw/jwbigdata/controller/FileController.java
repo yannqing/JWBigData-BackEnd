@@ -167,9 +167,8 @@ public class FileController {
      * @return
      */
     @PostMapping("/compareFiles")
-    public BaseResponse<Object> compareFiles(Integer userId, Integer[] fileIdArray, String[][] fieldArray, String[] saveFieldArray, String compareType) {
+    public BaseResponse<Object> compareFiles(Integer userId, Integer[] fileIdArray, String[][] fieldArray, boolean[][] saveFieldArray, String compareType) {
         String[][] data = fileInfoService.compareFiles(userId, fileIdArray, fieldArray, saveFieldArray, compareType);
-
         return ResultUtils.success(Code.SUCCESS, data, "比对文件成功！");
     }
 

@@ -27,9 +27,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -278,13 +275,25 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     }
 
     @Override
-    public String[][] compareFiles(Integer userId, Integer[] fileIdArray, String[][] fieldArray, String[] saveFieldArray, String compareType) {
-        List<Set<Integer>> columnIndexes = new ArrayList<>();
+    public String[][] compareFiles(Integer userId, Integer[] fileIdArray, String[][] fieldArray, boolean[][] saveFieldArray, String compareType) {
+        List<Set<Integer>> rowIndexes = new ArrayList<>();
+
         for (int j = 0; j < fieldArray.length; j++) {
+            //将主表所有行添加
             //获取主表
             FileInfo mainFileInfo = fileInfoMapper.selectById(fileIdArray[0]);
+            if (j == 0) {
+                Set<Integer> mainTableRow = new HashSet<>();
+                Integer mainTableCount = fileInfoMapper.countData(mainFileInfo.getTableName());
+                for (int i = 0; i < mainTableCount; i++) {
+                    mainTableRow.add(i);
+                }
+                rowIndexes.add(mainTableRow);
+            }
+            //数据对比，存储符合的行索引
+            //获取主表要对比的列数据
             List<String> mainColumnData = fileInfoMapper.selectColumns(mainFileInfo.getTableName(), fieldArray[j][0]);
-
+            //循环所有的附表
             for (int i = 1; i < fileIdArray.length; i++) {
                 Set<Integer> index;
                 index = new HashSet<>();
@@ -293,29 +302,84 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
                 List<String> otherColumnData = fileInfoMapper.selectColumns(otherFileInfo.getTableName(), fieldArray[j][i]);
                 for (int k = 0; k < mainColumnData.size(); k++) {
                     for (int l = 0; l < otherColumnData.size(); l++) {
-                        if (mainColumnData.get(k).equals(otherColumnData.get(l))) {
+                        if (mainColumnData.get(k).equals(otherColumnData.get(l)) && compareType.equals("正向")) {
+                            index.add(l);
+                        } else if (!mainColumnData.get(k).equals(otherColumnData.get(l)) && compareType.equals("反向")) {
                             index.add(l);
                         }
                     }
                 }
-                if (columnIndexes.size() < i) {
-                    columnIndexes.add(index);
+                if (rowIndexes.size() - 1 < i) {
+                    rowIndexes.add(index);
                 }else {
                     int finalI = i;
                     index.forEach(key -> {
-                        columnIndexes.get(finalI - 1).add(key);
+                        rowIndexes.get(finalI).add(key);
                     });
                 }
             }
         }
 
-
-        if (compareType.equals("正向")) {
-
-        }else {
-
+        //需要展示的列索引
+        List<List<Integer>> columnIndexes = new ArrayList<>();
+        for (int i = 0; i < saveFieldArray.length; i++) {
+            List<Integer> columnIndex = new ArrayList<>();
+            for (int j = 0; j < saveFieldArray[i].length; j++) {
+                if (saveFieldArray[i][j]) {
+                    columnIndex.add(j);
+                }
+            }
+            columnIndexes.add(columnIndex);
         }
-        return new String[0][];
+        System.out.println(columnIndexes);
+
+        //需要展示的字段名
+        List<List<String>> columnNames = new ArrayList<>();
+        for (int i = 0; i < fileIdArray.length; i++) {
+            List<String> tableColumns = fileInfoMapper.getTableColumns(fileInfoMapper.selectById(fileIdArray[i]).getTableName());
+            List<String> columns = new ArrayList<>();
+            for (int j = 0; j < columnIndexes.get(i).size(); j++) {
+                String column = tableColumns.get(columnIndexes.get(i).get(j));
+                columns.add(column);
+            }
+            columnNames.add(columns);
+        }
+
+        List<List<String>> result = new ArrayList<>();
+
+        //循环列，查找符合条件的行
+        for (int i = 0; i < columnNames.size(); i++) {
+            //表
+            FileInfo fileInfo = fileInfoMapper.selectById(fileIdArray[i]);
+            for (int j = 0; j < columnNames.get(i).size(); j++) {
+                //查找这一列的所有数据
+                List<String> strings = fileInfoMapper.selectColumns(fileInfo.getTableName(), columnNames.get(i).get(j));
+                //筛选行
+                //添加字段（表头）到结果列中
+                List<String> resultColumn = new ArrayList<>();
+                resultColumn.add(columnNames.get(i).get(j));
+
+                for (int k = 0; k < strings.size(); k++) {
+                    if (rowIndexes.get(i).contains(k)) {
+                        resultColumn.add(strings.get(k));
+                    }
+                }
+                //添加结果列到 result 中
+                result.add(resultColumn);
+            }
+        }
+
+
+        //结果处理
+        String[][] res = new String[result.size()][];
+
+        for (int i = 0; i < result.size(); i++) {
+            for (int j = 0; j < result.get(i).size(); j++) {
+                res[i][j] = result.get(i).get(j);
+            }
+        }
+
+        return res;
     }
 }
 

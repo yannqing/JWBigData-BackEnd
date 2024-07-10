@@ -35,5 +35,5 @@ public interface FileInfoService extends IService<FileInfo> {
 
     String[][] getFields(Integer userId, Integer[] fileIdArray);
 
-    String[][] compareFiles(Integer userId, Integer[] fileIdArray, String[][] fieldArray, String[] saveFieldArray, String compareType);
+    String[][] compareFiles(Integer userId, Integer[] fileIdArray, String[][] fieldArray, boolean[][] saveFieldArray, String compareType);
 }
