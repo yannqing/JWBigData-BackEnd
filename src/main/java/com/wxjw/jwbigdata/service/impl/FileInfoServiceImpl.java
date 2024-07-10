@@ -409,6 +409,25 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
 
         return result;
     }
+
+    @Override
+    public void saveFile(Integer userId, Integer fileId, String[][] content) {
+        FileInfo fileInfo = fileInfoMapper.selectById(fileId);
+        //获取更新的数据
+        List<List<String>> tableData = Arrays.stream(content).map(Arrays::asList).toList();
+        //获取表的字段
+        List<String> tableColumns = fileInfoMapper.getTableColumns(fileInfo.getTableName());
+
+        //删除表
+        operationMapper.dropTable(fileInfo.getTableName());
+
+        //建表
+        fileInfoMapper.createTable(fileInfo.getTableName(), tableColumns);
+        //插入数据
+        for(List<String> data : tableData) {
+            operationMapper.dynamicInsert(fileInfo.getTableName(), tableColumns, data);
+        }
+    }
 }
 
 

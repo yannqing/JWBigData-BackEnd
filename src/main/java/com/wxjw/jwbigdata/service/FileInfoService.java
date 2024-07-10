@@ -38,4 +38,6 @@ public interface FileInfoService extends IService<FileInfo> {
     String[][] compareFiles(Integer userId, Integer[] fileIdArray, String[][] fieldArray, boolean[][] saveFieldArray, String compareType);
 
     String[][] openFile(Integer userId, Integer fileId);
+
+    void saveFile(Integer userId, Integer fileId, String[][] content);
 }

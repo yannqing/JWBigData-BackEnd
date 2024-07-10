@@ -11,7 +11,7 @@ import java.util.Map;
 
 
 /**
-* @author 67121
+* @author 彦青
 * @description 针对表【file_info】的数据库操作Mapper
 * @createDate 2024-06-08 10:36:47
 * @Entity generator.domain.FileInfo

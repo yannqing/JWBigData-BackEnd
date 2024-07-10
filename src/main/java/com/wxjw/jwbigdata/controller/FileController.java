@@ -96,7 +96,7 @@ public class FileController {
     }
 
     /**
-     * 获取文件内容 TODO 未确定
+     * 获取文件内容 ok
      * @param userId
      * @param fileId
      * @return
@@ -121,15 +121,16 @@ public class FileController {
     }
 
     /**
-     * 保存文件 TODO 未确定
+     * 保存文件 ok
      * @param userId
      * @param fileId
      * @param content
      * @return
      */
     @PostMapping("/saveFile")
-    public BaseResponse<Object> saveFile(Integer userId, Integer fileId, String[] content) {
-        return null;
+    public BaseResponse<Object> saveFile(Integer userId, Integer fileId, String[][] content) {
+        fileInfoService.saveFile(userId, fileId, content);
+        return ResultUtils.success(Code.SUCCESS, null, "保存文件成功");
     }
 
     /**
