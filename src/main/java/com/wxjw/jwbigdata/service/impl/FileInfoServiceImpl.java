@@ -381,6 +381,34 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
 
         return res;
     }
+
+    @Override
+    public String[][] openFile(Integer userId, Integer fileId) {
+        //获取表数据
+        FileInfo fileInfo = fileInfoMapper.selectById(fileId);
+        //1. 获取表的所有字段（表头）
+        List<String> tableColumns = fileInfoMapper.getTableColumns(fileInfo.getTableName());
+        //2. 根据每个字段来获取字段下面的具体数据
+        List<List<String>> tableData = new ArrayList<>();
+        for (String tableColumn : tableColumns) {
+            List<String> data = fileInfoMapper.selectColumns(fileInfo.getTableName(), tableColumn);
+            tableData.add(data);
+        }
+        String[][] result = new String[tableData.size()][];
+        for (int i = 0; i < tableData.size(); i++) {
+            result[i] = new String[tableData.get(i).size() + 1];
+            for (int j = 0; j < tableData.get(i).size() + 1; j ++) {
+                if (j == 0) {
+                    result[i][j] = tableColumns.get(i);
+                }else {
+                    result[i][j] = tableData.get(i).get(j-1);
+                }
+            }
+        }
+
+
+        return result;
+    }
 }
 
 

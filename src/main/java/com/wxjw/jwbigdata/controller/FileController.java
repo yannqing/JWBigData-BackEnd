@@ -103,7 +103,9 @@ public class FileController {
      */
     @PostMapping("/openFile")
     public BaseResponse<Object> openFile(Integer userId, Integer fileId) {
-        return null;
+        String[][] data = fileInfoService.openFile(userId, fileId);
+
+        return ResultUtils.success(Code.SUCCESS, data, "获取文件内容成功！");
     }
 
     /**
@@ -158,7 +160,7 @@ public class FileController {
     }
 
     /**
-     * 比对多个文件 TODO
+     * 比对多个文件 ok
      * @param userId
      * @param fileIdArray 要比对的文件
      * @param fieldArray 选中的字段矩阵，二维矩阵
