@@ -17,7 +17,7 @@
             <result property="model" column="model" jdbcType="TINYINT"/>
             <result property="createdUser" column="created_user" jdbcType="INTEGER"/>
             <result property="createdTime" column="created_time" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+            <result property="isDelete" column="is_delete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -25,6 +25,6 @@
         username,department_id,position,
         role,portrait,compare,
         model,created_user,created_time,
-        isDelete
+        is_delete
     </sql>
 </mapper>
