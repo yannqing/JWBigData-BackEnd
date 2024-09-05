@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wxjw.jwbigdata.mapper.ModeltaskMapper">
+
+    <resultMap id="BaseResultMap" type="com.wxjw.jwbigdata.domain.Modeltask">
+            <id property="id" column="Id" jdbcType="INTEGER"/>
+            <result property="task" column="task" jdbcType="VARCHAR"/>
+            <result property="resulttable" column="resulttable" jdbcType="VARCHAR"/>
+            <result property="resultcomment" column="resultcomment" jdbcType="VARCHAR"/>
+            <result property="timestamp" column="timestamp" jdbcType="TIMESTAMP"/>
+            <result property="modelid" column="modelId" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        Id,task,resulttable,
+        resultcomment,timestamp,modelId
+    </sql>
+
+    <update id="createNewTable" parameterType="String">
+        CREATE TABLE ${tableName}
+            ${sqlStatement}
+
+    </update>
+
+    <select id="tableExist" parameterType="String" resultType="java.util.Map">
+        select * from information_schema.`TABLES` where TABLE_SCHEMA='jw' and TABLE_NAME=${tableName}
+    </select>
+
+    <select id="resultTable" parameterType="String" resultType="java.util.ArrayList">
+        select * from ${tableName}
+    </select>
+
+    <select id="resultDetail" parameterType="String" resultType="java.util.Map">
+        select * from ${tableName} where ${fieldName} = ${id}
+    </select>
+</mapper>

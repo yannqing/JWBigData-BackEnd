@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wxjw.jwbigdata.mapper.NewColumnMapper">
+
+    <resultMap id="BaseResultMap" type="com.wxjw.jwbigdata.domain.NewColumn">
+            <id property="id" column="Id" jdbcType="INTEGER"/>
+            <result property="newtableId" column="newtable_id" jdbcType="INTEGER"/>
+            <result property="columnname" column="columnname" jdbcType="VARCHAR"/>
+            <result property="comment" column="comment" jdbcType="VARCHAR"/>
+            <result property="flag" column="flag" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        Id,newtable_id,columnname,
+        comment,flag
+    </sql>
+</mapper>

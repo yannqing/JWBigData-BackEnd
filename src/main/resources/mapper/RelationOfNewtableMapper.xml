@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wxjw.jwbigdata.mapper.RelationOfNewtableMapper">
+
+    <resultMap id="BaseResultMap" type="com.wxjw.jwbigdata.domain.RelationOfNewtable">
+            <id property="id" column="Id" jdbcType="INTEGER"/>
+            <result property="newtableId" column="newtable_id" jdbcType="INTEGER"/>
+            <result property="label" column="label" jdbcType="VARCHAR"/>
+            <result property="sunlable" column="sunlable" jdbcType="VARCHAR"/>
+            <result property="preSerial" column="pre_serial" jdbcType="VARCHAR"/>
+            <result property="descript" column="descript" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        Id,newtable_id,label,
+        sunlable,pre_serial,descript
+    </sql>
+</mapper>

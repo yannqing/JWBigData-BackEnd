@@ -102,15 +102,15 @@ public class RuleController {
         return ResultUtils.success(Code.SUCCESS, null, "修改规则启用状态成功");
     }
 
-    @PostMapping("/getRuleResult")
-    public BaseResponse<JSONArray> getRuleResult(String ruleId) {
-        JSONArray result = jwRuleService.getRuleResult(ruleId);
-        return ResultUtils.success(Code.SUCCESS, result, "获取模型分析结果");
-    }
+//    @PostMapping("/getRuleResult")
+//    public BaseResponse<JSONArray> getRuleResult(String ruleId) {
+//        JSONArray result = jwRuleService.getRuleResult(ruleId);
+//        return ResultUtils.success(Code.SUCCESS, result, "获取模型分析结果");
+//    }
 
-    @PostMapping("/getResultDetail")
-    public BaseResponse<JSONObject> getResultDetail(String ruleId,String id) {
-        JSONObject result = jwRuleService.getResultDetail(ruleId,id);
+    @PostMapping("/getRuleResult")
+    public BaseResponse<JSONObject> getRuleResult(String ruleId,String userid) {
+        JSONObject result = jwRuleService.getResultDetail(ruleId,userid);
         return ResultUtils.success(Code.SUCCESS, result, "获取模型分析详情结果");
     }
 }
