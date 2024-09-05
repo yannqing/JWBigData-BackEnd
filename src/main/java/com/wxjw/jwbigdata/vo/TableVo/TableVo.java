@@ -1,7 +1,7 @@
 package com.wxjw.jwbigdata.vo.TableVo;
 
-import com.wxjw.jwbigdata.domain.JwField;
-import com.wxjw.jwbigdata.domain.JwTable;
+import com.wxjw.jwbigdata.domain.NewColumn;
+import com.wxjw.jwbigdata.domain.NewTable;
 import lombok.Data;
 
 import java.util.List;
@@ -18,13 +18,13 @@ public class TableVo {
     private Integer tableId;
     private String tableName;
     private String description;
-    private List<JwField> children;
+    private List<NewColumn> children;
 
-    public TableVo(JwTable jwTable,List<JwField> jwFields){
-        this.tableId = jwTable.getTableId();
-        this.tableName = jwTable.getTableName();
-        this.description = jwTable.getDescription();
-        this.children = jwFields;
+    public TableVo(NewTable newTable, List<NewColumn> newColumns){
+        this.tableId = newTable.getId();
+        this.tableName = newTable.getTablename();
+        this.description = newTable.getComment();
+        this.children = newColumns;
     }
 
 

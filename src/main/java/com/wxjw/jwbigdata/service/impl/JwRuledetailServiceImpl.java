@@ -6,11 +6,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.wxjw.jwbigdata.domain.*;
-import com.wxjw.jwbigdata.mapper.JwFieldMapper;
-import com.wxjw.jwbigdata.mapper.JwRuleMapper;
-import com.wxjw.jwbigdata.mapper.JwTableMapper;
+import com.wxjw.jwbigdata.mapper.*;
 import com.wxjw.jwbigdata.service.JwRuledetailService;
-import com.wxjw.jwbigdata.mapper.JwRuledetailMapper;
 import com.wxjw.jwbigdata.utils.StringUtils;
 import com.wxjw.jwbigdata.vo.BaseResponse;
 import com.wxjw.jwbigdata.vo.RuleVo.RuleDetailVo;
@@ -40,10 +37,10 @@ public class JwRuledetailServiceImpl extends ServiceImpl<JwRuledetailMapper, JwR
     private JwRuleMapper jwRuleMapper;
 
     @Resource
-    private JwTableMapper jwTableMapper;
+    private NewTableMapper newTableMapper;
 
     @Resource
-    private JwFieldMapper jwFieldMapper;
+    private NewColumnMapper newColumnMapper;
 
     @Override
     public List<RuleDetailVo> getSubrules(String ruleId) {
@@ -59,19 +56,19 @@ public class JwRuledetailServiceImpl extends ServiceImpl<JwRuledetailMapper, JwR
                     String fieldName1 = ruledetail.getFieldName();
                     Integer tableId2 = ruledetail.getMatchtableId();
                     String fieldName2 = ruledetail.getMatchfieldName();
-                    JwTable table1 = new JwTable();
-                    JwField field1 = new JwField();
-                    JwTable table2 = new JwTable();
-                    JwField field2 = new JwField();
+                    NewTable table1 = new NewTable();
+                    NewColumn field1 = new NewColumn();
+                    NewTable table2 = new NewTable();
+                    NewColumn field2 = new NewColumn();
 
                     if(tableId1 > 0 && fieldName1.length()> 0){
-                        table1 = jwTableMapper.selectById(tableId1);
-                        field1 = jwFieldMapper.selectOne(new QueryWrapper<JwField>().eq("table_id",tableId1).eq("field_name",fieldName1));
+                        table1 = newTableMapper.selectById(tableId1);
+                        field1 = newColumnMapper.selectOne(new QueryWrapper<NewColumn>().eq("id",tableId1).eq("columnname",fieldName1));
                     }
 
                     if(tableId2 > 0 && fieldName2.length()> 0) {
-                        table2 = jwTableMapper.selectById(tableId2);
-                        field2 = jwFieldMapper.selectOne(new QueryWrapper<JwField>().eq("table_id",tableId2).eq("field_name",fieldName2));
+                        table2 = newTableMapper.selectById(tableId2);
+                        field2 = newColumnMapper.selectOne(new QueryWrapper<NewColumn>().eq("id",tableId2).eq("columnname",fieldName2));
                     }
 
                     result.add(new RuleDetailVo(ruledetail,table1,field1,table2,field2));

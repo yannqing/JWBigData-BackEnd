@@ -16,11 +16,7 @@ import java.util.Map;
 public interface JwRuleMapper extends BaseMapper<JwRule> {
     int createNewTable(@Param("tableName") String tableName, @Param("sqlStatement") String sqlStatement);
 
-    Map<String,Object> tableExist(@Param("tableName") String tableName);
 
-    List<Map<String,Object>> resultTable(@Param("tableName") String tableName);
-
-    Map<String,Object> resultDetail(@Param("tableName") String tableName,@Param("fieldName") String fieldName,@Param("id") String id);
 }
 
 

@@ -41,16 +41,19 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
     private UserMapper userMapper;
 
     @Resource
-    private JwTableMapper jwTableMapper;
+    private NewTableMapper jwTableMapper;
 
     @Resource
-    private JwFieldMapper jwFieldMapper;
+    private NewColumnMapper jwFieldMapper;
 
     @Autowired
     private TableConfig tableConfig;
 
+    @Resource
+    private ModeltaskMapper modeltaskMapper;
+
     @Override
-    public void addRule(String userId, String ruleName, String ruleComment, String ruleSteps) throws JsonProcessingException {
+    public void addRule(String userId, String ruleName, String ruleComment, String ruleSteps) {
         User user = userMapper.selectOne(new QueryWrapper<User>().eq("id", userId));
         if(user == null)
             throw new IllegalArgumentException("用户不存在，请重试！");
@@ -60,7 +63,7 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
         rule.setDescription(ruleComment);
         rule.setCreateBy(Integer.parseInt(userId));
         rule.setCreateTime(DateTime.now());
-        if(user != null && user.getRole()==1) //管理员:公有模型
+        if(user.getRole()==1) //管理员:公有模型
             rule.setStatus(1);
         else rule.setStatus(0); //普通用户：私有模型
         jwRuleMapper.insert(rule);
@@ -98,7 +101,7 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
 
     @Override
     public List<RuleVo> getRuleList() {
-        List<JwRule> rules = jwRuleMapper.selectList(new QueryWrapper<JwRule>());
+        List<JwRule> rules = jwRuleMapper.selectList(new QueryWrapper<>());
         List<RuleVo> ruleVos = new ArrayList<>();
         rules.forEach(rule -> {
             RuleVo vo = new RuleVo(rule, userMapper.selectById(rule.getCreateBy()));
@@ -174,6 +177,7 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                     .eq("rule_id", ruleId)
                     .set("is_on", isOn)
             );
+            modeltaskMapper.delete(new QueryWrapper<Modeltask>().eq("modelId",ruleId));
         }
         else{
             // 需生成sql_statement
@@ -182,27 +186,27 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
             //匹配常量
             List<JwRuledetail> ruleDetailsType1 = ruledetails.stream().filter(
                     ruledetail -> ruledetail.getMatchType().equals("1")
-            ).collect(Collectors.toList());
+            ).toList();
             //关联字段
             List<JwRuledetail> ruleDetailsType2 = ruledetails.stream().filter(
                     ruledetail -> ruledetail.getMatchType().equals("2")
-            ).collect(Collectors.toList());
+            ).toList();
             //汇总数量
             List<JwRuledetail> ruleDetailsType3 = ruledetails.stream().filter(
                     ruledetail -> ruledetail.getMatchType().equals("3")
-            ).collect(Collectors.toList());
+            ).toList();
             //汇总合计
             List<JwRuledetail> ruleDetailsType4 = ruledetails.stream().filter(
                     ruledetail -> ruledetail.getMatchType().equals("4")
-            ).collect(Collectors.toList());
+            ).toList();
             //字段比较
             List<JwRuledetail> ruleDetailsType5 = ruledetails.stream().filter(
                     ruledetail -> ruledetail.getMatchType().equals("5")
-            ).collect(Collectors.toList());
+            ).toList();
             //比较当前日期
             List<JwRuledetail> ruleDetailsType6 = ruledetails.stream().filter(
                     ruledetail -> ruledetail.getMatchType().equals("6")
-            ).collect(Collectors.toList());
+            ).toList();
 
             String selectSql = "";
             String fromSql = "";
@@ -214,13 +218,13 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
             //循环type2:表字段连接
             Set<String> tableset = new HashSet();
             for (JwRuledetail ruleDetail :ruleDetailsType2) {
-                JwTable table1 = jwTableMapper.selectById(ruleDetail.getTableId());
-                String tableName1 = table1.getTableName();
-                JwTable table2 = jwTableMapper.selectById(ruleDetail.getMatchtableId());
-                String tableName2 = table2.getTableName();
+                NewTable table1 = jwTableMapper.selectById(ruleDetail.getTableId());
+                String tableName1 = table1.getTablename();
+                NewTable table2 = jwTableMapper.selectById(ruleDetail.getMatchtableId());
+                String tableName2 = table2.getTablename();
                 tableset.add(tableName1);
                 if(ruleDetail.getPattern().equals("=")){
-                    tableset.add(table2.getTableName());
+                    tableset.add(table2.getTablename());
                     whereSql += " AND "+tableName1+"."+ruleDetail.getFieldName()+" = "+
                             tableName2+"."+ruleDetail.getMatchfieldName();
                 }
@@ -256,22 +260,21 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
 
             //循环type1:表字段匹配常量
             for (JwRuledetail ruleDetail1:ruleDetailsType1) {
-                JwTable table1 = jwTableMapper.selectById(ruleDetail1.getTableId());
-                String tableName1 = table1.getTableName();
+                NewTable table1 = jwTableMapper.selectById(ruleDetail1.getTableId());
+                String tableName1 = table1.getTablename();
                 if(tableset.contains(tableName1))
                 {
                     String marchvalue = ruleDetail1.getMatchValue();
                     String fieldName = ruleDetail1.getFieldName();
-                    JwField field = jwFieldMapper.selectOne(new QueryWrapper<JwField>().eq("table_id",table1.getTableId()).eq("field_name",fieldName));
+                    NewColumn field = jwFieldMapper.selectOne(new QueryWrapper<NewColumn>().eq("id",table1.getId()).eq("columnname",fieldName));
                     //如果不是数字类型，需要特殊拼接处理
-                    if(field.getDataType().contains("time") && field.getDataType().contains("char"))
+
+                    if(ruleDetail1.getPattern().equals("like"))
                     {
-                        if(ruleDetail1.getPattern().equals("like"))
-                        {
-                            marchvalue = "'%"+marchvalue+"%'";
-                        }
-                        else marchvalue = "'"+marchvalue+"'";
+                        marchvalue = "'%"+marchvalue+"%'";
                     }
+                    else marchvalue = "'"+marchvalue+"'";
+
                     selectSql += ","+tableName1+"."+ruleDetail1.getFieldName()+" '"+tableName1+"-"+fieldName+"'";
                     whereSql += " AND "+tableName1+"."+ruleDetail1.getFieldName()+" "+
                             ruleDetail1.getPattern()+marchvalue;
@@ -280,10 +283,10 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
 
             //循环type5:表字段与字段间匹配差额
             for (JwRuledetail ruleDetail5:ruleDetailsType5) {
-                JwTable table1 = jwTableMapper.selectById(ruleDetail5.getTableId());
-                String tableName1 = table1.getTableName();
-                JwTable table2 = jwTableMapper.selectById(ruleDetail5.getMatchtableId());
-                String tableName2 = table2.getTableName();
+                NewTable table1 = jwTableMapper.selectById(ruleDetail5.getTableId());
+                String tableName1 = table1.getTablename();
+                NewTable table2 = jwTableMapper.selectById(ruleDetail5.getMatchtableId());
+                String tableName2 = table2.getTablename();
                 String marchvalue = ruleDetail5.getMatchValue();
                 String fieldName1 = ruleDetail5.getFieldName();
                 String fieldName2 = ruleDetail5.getMatchfieldName();
@@ -318,8 +321,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
 
             //循环type6:日期字段筛选多少天以内
             for (JwRuledetail ruleDetail6:ruleDetailsType6) {
-                JwTable table1 = jwTableMapper.selectById(ruleDetail6.getTableId());
-                String tableName1 = table1.getTableName();
+                NewTable table1 = jwTableMapper.selectById(ruleDetail6.getTableId());
+                String tableName1 = table1.getTablename();
                 if(tableset.contains(tableName1))
                 {
                     String marchvalue = ruleDetail6.getMatchValue();
@@ -329,8 +332,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
 
             //循环type3:汇总数量条件
             for (JwRuledetail ruleDetail3 :ruleDetailsType3) {
-                JwTable table1 = jwTableMapper.selectById(ruleDetail3.getTableId());
-                String tableName1 = table1.getTableName();
+                NewTable table1 = jwTableMapper.selectById(ruleDetail3.getTableId());
+                String tableName1 = table1.getTablename();
                 String marchvalue = ruleDetail3.getMatchValue();
                 if(tableset.contains(tableName1)){
                     selectSql += ",COUNT("+tableName1+"."+ruleDetail3.getFieldName()+") ";
@@ -353,8 +356,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
 
             //循环type4:汇总合计条件
             for (JwRuledetail ruleDetail4 :ruleDetailsType4) {
-                JwTable table1 = jwTableMapper.selectById(ruleDetail4.getTableId());
-                String tableName1 = table1.getTableName();
+                NewTable table1 = jwTableMapper.selectById(ruleDetail4.getTableId());
+                String tableName1 = table1.getTablename();
                 String marchvalue = ruleDetail4.getMatchValue();
                 if(tableset.contains(tableName1)){
                     selectSql += ",SUM("+tableName1+"."+ruleDetail4.getFieldName()+") ";
@@ -381,7 +384,7 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
 
                 // 创建结果表
                 String resultTableName = UUID.randomUUID().toString().replace("-","");
-                jwRuleMapper.createNewTable(resultTableName,sql.replace(" 1=1 "," 1=0 "));
+                modeltaskMapper.createNewTable(resultTableName,sql.replace(" 1=1 "," 1=0 "));
                 // 修改为启用
                 jwRuleMapper.update(new UpdateWrapper<JwRule>()
                         .eq("rule_id", ruleId)
@@ -389,6 +392,14 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                         .set("result_table",resultTableName)
                         .set("is_on",1)
                 );
+                Modeltask modeltask = new Modeltask();
+                modeltask.setTask(sql);
+                modeltask.setResulttable(resultTableName);
+                modeltask.setResultcomment(rule.getDescription());
+                modeltask.setTimestamp(new Date());
+                modeltask.setModelid(Integer.parseInt(ruleId));
+                modeltaskMapper.insert(modeltask);
+
                 log.info("修改{}模型的状态成功", rule.getRuleName());
             }
 
@@ -412,11 +423,11 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
         }
 
         String resultTable = rule.getResultTable();
-        Map<String, Object> tableExist = jwRuleMapper.tableExist(resultTable);
+        Map<String, Object> tableExist = modeltaskMapper.tableExist(resultTable);
         if(tableExist != null){
             //结果表存在
             JSONArray details = new JSONArray();
-            List<Map<String, Object>> maps = jwRuleMapper.resultTable(resultTable);
+            List<Map<String, Object>> maps = modeltaskMapper.resultTable(resultTable);
             maps.forEach(
                     map ->{
                         JSONObject jsonObject = new JSONObject(map);
@@ -452,17 +463,17 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
         }else if(rule.getIsOn()<0 || StringUtils.isEmpty(rule.getResultTable())){
             throw new IllegalArgumentException("模型未启用，请联系管理员！");
         }
-        else if(rule.getType() == 1){
+        else if(rule.getType() == 0){
             //人物模型
             String tableName = rule.getResultTable();
-            Map<String, Object> stringObjectMap = jwRuleMapper.resultDetail(tableName, tableConfig.gethumanId(), id);
+            Map<String, Object> stringObjectMap = modeltaskMapper.resultDetail(tableName, tableConfig.gethumanId(), id);
             result = new JSONObject(stringObjectMap);
             return result;
         }
         else if(rule.getType() == 1){
             //单位模型
             String tableName = rule.getResultTable();
-            Map<String, Object> stringObjectMap = jwRuleMapper.resultDetail(tableName, tableConfig.getcompanyId(), id);
+            Map<String, Object> stringObjectMap = modeltaskMapper.resultDetail(tableName, tableConfig.getcompanyId(), id);
             result = new JSONObject(stringObjectMap);
             return result;
         }

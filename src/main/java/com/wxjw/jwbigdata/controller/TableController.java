@@ -1,10 +1,8 @@
 package com.wxjw.jwbigdata.controller;
 
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.wxjw.jwbigdata.common.Code;
-import com.wxjw.jwbigdata.service.JwFieldService;
-import com.wxjw.jwbigdata.service.JwTableService;
+import com.wxjw.jwbigdata.service.NewTableService;
 import com.wxjw.jwbigdata.utils.ResultUtils;
 import com.wxjw.jwbigdata.vo.BaseResponse;
 import jakarta.annotation.Resource;
@@ -21,11 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TableController {
     @Resource
-    private JwTableService jwTableService;
+    private NewTableService newTableService;
 
     @PostMapping("/getFieldsList")
     public BaseResponse<Object> getFieldsList(){
-        JSONArray result = jwTableService.getFieldsList();
+        JSONArray result = newTableService.getFieldsList();
         return ResultUtils.success(Code.SUCCESS,result,"获取所有字段");
     }
 }

@@ -1,8 +1,6 @@
 package com.wxjw.jwbigdata.vo.RuleVo;
 
-import com.wxjw.jwbigdata.domain.JwField;
-import com.wxjw.jwbigdata.domain.JwRuledetail;
-import com.wxjw.jwbigdata.domain.JwTable;
+import com.wxjw.jwbigdata.domain.*;
 import lombok.Data;
 
 /**
@@ -32,27 +30,27 @@ public class RuleDetailVo {
 
     private String matchValue;
 
-    public RuleDetailVo(JwRuledetail ruledetail, JwTable table1, JwField field1, JwTable table2,JwField field2){
+    public RuleDetailVo(JwRuledetail ruledetail, NewTable table1, NewColumn field1, NewTable table2, NewColumn field2){
         this.subruleId = ruledetail.getRuledetailId();
         this.note = ruledetail.getNote();
         if(table1 != null){
-            this.tableComment = table1.getDescription();
+            this.tableComment = table1.getComment();
         }
         else this.tableComment = "";
         if(field1 != null){
-            this.fieldComment = field1.getDescription();
+            this.fieldComment = field1.getComment();
         }
         else
             this.fieldComment = "";
         this.matchType = ruledetail.getMatchType();
         this.pattern = ruledetail.getPattern();
         if(table2 != null){
-            this.matchtableComment = table2.getDescription();
+            this.matchtableComment = table2.getComment();
         }
         else
             this.matchtableComment = "";
         if(field2 != null){
-            this.matchfieldComment = field2.getDescription();
+            this.matchfieldComment = field2.getComment();
         }
         else
             this.matchfieldComment = "";

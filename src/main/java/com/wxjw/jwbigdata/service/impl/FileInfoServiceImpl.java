@@ -7,20 +7,16 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.wxjw.jwbigdata.domain.FileInfo;
-import com.wxjw.jwbigdata.domain.JwTable;
+import com.wxjw.jwbigdata.domain.NewTable;
 import com.wxjw.jwbigdata.domain.User;
 import com.wxjw.jwbigdata.listener.excel.ExcelListener;
-import com.wxjw.jwbigdata.mapper.FileInfoMapper;
-import com.wxjw.jwbigdata.mapper.JwTableMapper;
-import com.wxjw.jwbigdata.mapper.OperationMapper;
-import com.wxjw.jwbigdata.mapper.UserMapper;
+import com.wxjw.jwbigdata.mapper.*;
 import com.wxjw.jwbigdata.service.FileInfoService;
 import com.wxjw.jwbigdata.vo.FileVo.ChildrenVo;
 import com.wxjw.jwbigdata.vo.FileVo.OnlineFileVo;
 import com.wxjw.jwbigdata.vo.FileVo.TreeVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,13 +40,13 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     @Resource
     private FileInfoMapper fileInfoMapper;
     @Resource
-    private JwTableMapper jwTableMapper;
+    private NewTableMapper jwTableMapper;
     @Autowired
     private OperationMapper operationMapper;
     @Resource
     private OperationServiceImpl operationService;
-    @Autowired
-    private DataSource dataSource;
+//    @Autowired
+//    private DataSource dataSource;
 
     @Override
     public void uploadFile(MultipartFile file, String fileName, String fileType, Integer userId) throws IOException {
@@ -79,7 +75,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             if (!childrenFiles.isEmpty()) {
                 //如果存在则删除
                 List<Integer> childrenIds = childrenFiles.stream().map(FileInfo::getId).collect(Collectors.toList());
-                fileInfoMapper.deleteByIds(childrenIds);
+                fileInfoMapper.deleteBatchIds(childrenIds);
                 //删除数据表
                 for (FileInfo child : childrenFiles) {
                     operationMapper.dropTable(child.getTableName());
@@ -123,14 +119,14 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
                 tree.setLabel("个人库");
                 tree.setDraggable(false);
                 tree.setChildren(getChildren(1));
-            };
+            }
             case 2: {
                 //结果库
                 tree.setLabel("结果库");
                 tree.setDraggable(false);
                 tree.setChildren(getChildren(2));
 
-            };
+            }
             case 3: {
                 //公共库
                 tree.setLabel("公共库");
@@ -178,7 +174,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             FileInfo fileInfo = new FileInfo();
             fileInfo.setParentId(parentId);
             fileInfo.setFileName(null);
-            fileInfo.setTableName(jwTableMapper.selectById(integer).getTableName());
+            fileInfo.setTableName(jwTableMapper.selectById(integer).getTablename());
             fileInfo.setIsEnd(1);
             fileInfo.setCreateBy(null);
             fileInfoMapper.insert(fileInfo);
@@ -217,9 +213,9 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     public List<OnlineFileVo> getOnlineFiles(Integer userId) {
         List<OnlineFileVo> onlineFiles = new ArrayList<>();
 
-        List<JwTable> jwTables = jwTableMapper.selectList(null);
-        for (JwTable jw : jwTables) {
-            OnlineFileVo onlineFileVo = new OnlineFileVo(jw.getTableId().toString(), jw.getTableName());
+        List<NewTable> jwTables = jwTableMapper.selectList(null);
+        for (NewTable jw : jwTables) {
+            OnlineFileVo onlineFileVo = new OnlineFileVo(jw.getId().toString(), jw.getTablename());
             onlineFiles.add(onlineFileVo);
         }
         return onlineFiles;

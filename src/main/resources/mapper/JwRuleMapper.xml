@@ -30,15 +30,5 @@
 
     </update>
 
-    <select id="tableExist" parameterType="String" resultType="java.util.Map">
-        select * from information_schema.`TABLES` where TABLE_SCHEMA='jw' and TABLE_NAME=${tableName}
-    </select>
 
-    <select id="resultTable" parameterType="String" resultType="java.util.ArrayList">
-        select * from ${tableName}
-    </select>
-
-    <select id="resultDetail" parameterType="String" resultType="java.util.Map">
-        select * from ${tableName} where ${fieldName} = ${id}
-    </select>
 </mapper>
