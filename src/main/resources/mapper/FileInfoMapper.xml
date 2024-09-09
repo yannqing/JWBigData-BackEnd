@@ -7,7 +7,7 @@
     <resultMap id="BaseResultMap" type="com.wxjw.jwbigdata.domain.FileInfo">
             <id property="id" column="id" jdbcType="INTEGER"/>
             <result property="parentId" column="parent_id" jdbcType="INTEGER"/>
-            <result property="fileName" column="file_name" jdbcType="VARCHAR"/>
+            <result property="fileName" column="name" jdbcType="VARCHAR"/>
             <result property="tableName" column="table_name" jdbcType="VARCHAR"/>
             <result property="isEnd" column="is_end" jdbcType="TINYINT"/>
             <result property="createBy" column="create_by" jdbcType="INTEGER"/>
@@ -16,7 +16,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,parent_id,file_name,
+        id,parent_id,name,
         table_name,is_end,create_by,
         create_time,status
     </sql>

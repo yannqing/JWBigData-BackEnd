@@ -48,7 +48,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         String redisToken = redisCache.getCacheObject("token:" + token);
 
         if (redisToken==null) {
-            response.setStatus(500);
+            response.setStatus(200);
             response.setContentType("application/json;charset=utf-8");
             response.getWriter().write(JSONUtil.toJsonStr(ResultUtils.failure(Code.TOKEN_EXPIRE,null,"您已退出，请重新登录")));
             log.info("您已退出，请重新登录");

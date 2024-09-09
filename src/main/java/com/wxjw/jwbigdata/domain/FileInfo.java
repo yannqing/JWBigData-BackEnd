@@ -31,7 +31,7 @@ public class FileInfo implements Serializable {
     /**
      * 名称
      */
-    @TableField(value = "file_name")
+    @TableField(value = "name")
     private String fileName;
 
     /**

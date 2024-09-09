@@ -48,6 +48,14 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
 //    @Autowired
 //    private DataSource dataSource;
 
+    /**
+     * 上传本地文件
+     * @param file 文件
+     * @param fileName 文件名
+     * @param fileType 文件类型
+     * @param userId 用户id
+     * @throws IOException
+     */
     @Override
     public void uploadFile(MultipartFile file, String fileName, String fileType, Integer userId) throws IOException {
         //参数校验
@@ -119,13 +127,14 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
                 tree.setLabel("个人库");
                 tree.setDraggable(false);
                 tree.setChildren(getChildren(1));
+                break;
             }
             case 2: {
                 //结果库
                 tree.setLabel("结果库");
                 tree.setDraggable(false);
                 tree.setChildren(getChildren(2));
-
+                break;
             }
             case 3: {
                 //公共库
@@ -390,19 +399,19 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             List<String> data = fileInfoMapper.selectColumns(fileInfo.getTableName(), tableColumn);
             tableData.add(data);
         }
-        String[][] result = new String[tableData.size()][];
-        for (int i = 0; i < tableData.size(); i++) {
-            result[i] = new String[tableData.get(i).size() + 1];
-            for (int j = 0; j < tableData.get(i).size() + 1; j ++) {
-                if (j == 0) {
-                    result[i][j] = tableColumns.get(i);
+        int columnSize = tableData.size();
+        int rowSize = tableData.get(0).size();
+        String[][] result = new String[rowSize][];
+        for (int i = 0; i < rowSize; i++) {
+            result[i] = new String[columnSize];
+            for (int j = 0; j < columnSize; j ++) {
+                if (i == 0) {
+                    result[i][j] = tableColumns.get(j);
                 }else {
-                    result[i][j] = tableData.get(i).get(j-1);
+                    result[i][j] = tableData.get(j).get(i - 1);
                 }
             }
         }
-
-
         return result;
     }
 
@@ -420,8 +429,11 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
         //建表
         fileInfoMapper.createTable(fileInfo.getTableName(), tableColumns);
         //插入数据
+        int index = 0;      // 保证表头不被当作数据插入
         for(List<String> data : tableData) {
-            operationMapper.dynamicInsert(fileInfo.getTableName(), tableColumns, data);
+            if (index ++ != 0) {
+                operationMapper.dynamicInsert(fileInfo.getTableName(), tableColumns, data.subList(0, tableColumns.size()));
+            }
         }
     }
 }

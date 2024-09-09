@@ -70,14 +70,14 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RedisConnectionException.class)
     public BaseResponse<Object> handleRedisConnectionFailureException(RedisConnectionException e, HttpServletRequest request, HttpServletResponse response){
-        log.error("redis连接异常："+e.getMessage());
+        log.error("redis连接异常2："+e.getMessage());
         return ResultUtils.failure("服务器繁忙，请稍后重试！");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public BaseResponse<Object> handleRedisConnectionFailureException(IllegalArgumentException e, HttpServletRequest request, HttpServletResponse response){
         log.error("参数错误：{}", e.getMessage());
-        return ResultUtils.failure("参数错误->"+e.getMessage());
+        return ResultUtils.failure("参数错误->" + e.getMessage());
     }
 
     /**

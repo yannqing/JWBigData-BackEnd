@@ -25,7 +25,9 @@ public class SecurityUserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         //获取到用户的全部信息
 //        User user = userDao.getUserByUsername(username);
-        User user = userMapper.selectOne(new QueryWrapper<User>().eq("username", username));
+        log.info("loading user by username: {}", username);
+        User user = userMapper.selectOne(new QueryWrapper<User>().eq("user_account", username));
+        log.debug("login user: {}", user);
         if (user == null) {
             throw new UsernameNotFoundException("用户不存在");
         }

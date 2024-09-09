@@ -78,7 +78,7 @@ public class ExcelListener extends AnalysisEventListener<Map<Integer, String>> {
         System.out.println(columns);
         //1. 查询此文件是否存在数据库中
         String fileTime = DateFormat.getFileTime();
-        FileInfo isExitFile = fileInfoMapper.selectOne(new QueryWrapper<FileInfo>().eq("file_name", fileName + fileTime));
+        FileInfo isExitFile = fileInfoMapper.selectOne(new QueryWrapper<FileInfo>().eq("name", fileName + fileTime));
         if (isExitFile == null) {
             //2. 添加file_info记录，文件
             FileInfo fileInfo = new FileInfo();
@@ -109,7 +109,7 @@ public class ExcelListener extends AnalysisEventListener<Map<Integer, String>> {
         fileInfoMapper.createTable(tableName, columns);
         log.info("创建表格{}成功", fileName+ DateFormat.getFileTime());
         //4. 新建表格信息同步到file_info中
-        FileInfo parentFile = fileInfoMapper.selectOne(new QueryWrapper<FileInfo>().eq("file_name", fileName + fileTime));
+        FileInfo parentFile = fileInfoMapper.selectOne(new QueryWrapper<FileInfo>().eq("name", fileName + fileTime));
         String sheetName = context.readSheetHolder().getSheetName();
         FileInfo fileInfo = new FileInfo();
         fileInfo.setParentId(parentFile.getId());

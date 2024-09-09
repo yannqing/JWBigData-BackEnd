@@ -5,15 +5,15 @@ import com.wxjw.jwbigdata.service.FileInfoService;
 import com.wxjw.jwbigdata.utils.ResultUtils;
 import com.wxjw.jwbigdata.vo.BaseResponse;
 import com.wxjw.jwbigdata.vo.FileVo.OnlineFileVo;
+import com.wxjw.jwbigdata.vo.FileVo.SaveFileVo;
 import com.wxjw.jwbigdata.vo.FileVo.TreeVo;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -24,6 +24,7 @@ public class FileController {
 
     /**
      * 上传文件
+     *
      * @param file
      * @param fileName
      * @param fileType
@@ -39,6 +40,7 @@ public class FileController {
 
     /**
      * 删除库文件（如果删除的是目录级别，则同时删除其子文件） ok
+     *
      * @param fileId
      * @return
      */
@@ -50,6 +52,7 @@ public class FileController {
 
     /**
      * 更改文件显示状态 ok
+     *
      * @param status
      * @param fileId
      * @return
@@ -63,6 +66,7 @@ public class FileController {
 
     /**
      * 获取在线文件 ok
+     *
      * @param userId
      * @return
      */
@@ -74,6 +78,7 @@ public class FileController {
 
     /**
      * 导入在线库文件 ok
+     *
      * @param userId
      * @param fileIdArray
      * @return
@@ -86,6 +91,7 @@ public class FileController {
 
     /**
      * 获取文件树 ok
+     *
      * @param userId
      * @return
      */
@@ -97,6 +103,7 @@ public class FileController {
 
     /**
      * 获取文件内容 ok
+     *
      * @param userId
      * @param fileId
      * @return
@@ -110,6 +117,7 @@ public class FileController {
 
     /**
      * 导出文件 ok
+     *
      * @param userId
      * @param fileIdArray
      * @return 返回文件的二进制流
@@ -122,19 +130,29 @@ public class FileController {
 
     /**
      * 保存文件 ok
-     * @param userId
-     * @param fileId
-     * @param content
+     * @param saveFileVo
      * @return
      */
     @PostMapping("/saveFile")
-    public BaseResponse<Object> saveFile(Integer userId, Integer fileId, String[][] content) {
+    public BaseResponse<Object> saveFile(@RequestBody SaveFileVo saveFileVo) {
+        Integer userId = null;
+        Integer fileId = null;
+        String[][] content = null;
+        try {
+            userId = Integer.parseInt(saveFileVo.getUserId());
+            fileId = Integer.parseInt(saveFileVo.getFileId());
+            content = saveFileVo.getContent();
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(e);
+        }
+
         fileInfoService.saveFile(userId, fileId, content);
         return ResultUtils.success(Code.SUCCESS, null, "保存文件成功");
     }
 
     /**
      * 检索内容 ok
+     *
      * @param userId
      * @param fileId
      * @param columnArray
@@ -150,6 +168,7 @@ public class FileController {
 
     /**
      * 获取比对文件字段 ok
+     *
      * @param userId
      * @param fileIdArray
      * @return
@@ -162,11 +181,12 @@ public class FileController {
 
     /**
      * 比对多个文件 ok
+     *
      * @param userId
-     * @param fileIdArray 要比对的文件
-     * @param fieldArray 选中的字段矩阵，二维矩阵
+     * @param fileIdArray    要比对的文件
+     * @param fieldArray     选中的字段矩阵，二维矩阵
      * @param saveFieldArray 结果文件中保存的字段列表
-     * @param compareType 比对方式，正向或反向
+     * @param compareType    比对方式，正向或反向
      * @return
      */
     @PostMapping("/compareFiles")
@@ -174,9 +194,6 @@ public class FileController {
         String[][] data = fileInfoService.compareFiles(userId, fileIdArray, fieldArray, saveFieldArray, compareType);
         return ResultUtils.success(Code.SUCCESS, data, "比对文件成功！");
     }
-
-
-
 
 
 }
