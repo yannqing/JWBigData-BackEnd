@@ -15,8 +15,10 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -43,8 +45,9 @@ public class RuleController {
     }
 
     @PostMapping("delRule")
-    public BaseResponse<Object> delRule(String[] ruleId){
-        jwRuleService.delRule(ruleId);
+    public BaseResponse<Object> delRule(@RequestBody LinkedHashMap<String, List<String>> ruleId){
+        List<String> ruleIds = ruleId.get("ruleId");
+        jwRuleService.delRule(ruleIds.toArray(new String[ruleIds.size()]));
         return ResultUtils.success(Code.SUCCESS, null, "删除规则成功！");
     }
 
@@ -90,7 +93,7 @@ public class RuleController {
         return ResultUtils.success(Code.SUCCESS, null, "添加规则明细成功");
     }
 
-    @PostMapping("delSubrule")
+    @PostMapping("/delSubrule")
     public BaseResponse<Object> delSubrule(String subruleId){
         jwRuledetailService.delSubrule(subruleId);
         return ResultUtils.success(Code.SUCCESS, null, "删除规则明细成功！");

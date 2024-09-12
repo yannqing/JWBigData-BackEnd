@@ -19,7 +19,7 @@ public interface FileInfoService extends IService<FileInfo> {
 
     void uploadFile(MultipartFile file, String fileName, String fileType, Integer userId) throws IOException;
 
-    void delFile(Integer[] fileId);
+    void delFile(String[] fileId);
 
     void switchFileStatus(Integer status, Integer fileId);
 

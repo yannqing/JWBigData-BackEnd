@@ -71,7 +71,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     }
 
     @Override
-    public void delFile(Integer[] fileId) {
+    public void delFile(String[] fileId) {
         //参数校验
         if (fileId.length == 0) {
             throw new IllegalArgumentException("参数为空！");

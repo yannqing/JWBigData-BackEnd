@@ -8,17 +8,22 @@ import com.wxjw.jwbigdata.vo.FileVo.OnlineFileVo;
 import com.wxjw.jwbigdata.vo.FileVo.SaveFileVo;
 import com.wxjw.jwbigdata.vo.FileVo.TreeVo;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class FileController {
 
+    private static final Logger log = LoggerFactory.getLogger(FileController.class);
     @Resource
     private FileInfoService fileInfoService;
 
@@ -45,8 +50,9 @@ public class FileController {
      * @return
      */
     @PostMapping("/delFile")
-    public BaseResponse<Object> delFile(Integer[] fileId) {
-        fileInfoService.delFile(fileId);
+    public BaseResponse<Object> delFile(@RequestBody LinkedHashMap<String, List<String>> fileId) {
+        List<String> fileIds = fileId.get("fileId");
+        fileInfoService.delFile(fileIds.toArray(new String[fileIds.size()]));
         return ResultUtils.success(Code.SUCCESS, null, "删除数据成功！");
     }
 
