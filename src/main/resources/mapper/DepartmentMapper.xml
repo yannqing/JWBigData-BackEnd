@@ -10,10 +10,11 @@
             <result property="createdUser" column="created_user" jdbcType="VARCHAR"/>
             <result property="createdTime" column="created_time" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="is_delete" jdbcType="TINYINT"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         id,name,created_user,
-        created_time,is_delete
+        created_time,is_delete,status
     </sql>
 </mapper>

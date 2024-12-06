@@ -52,23 +52,21 @@ public class JwRuledetailServiceImpl extends ServiceImpl<JwRuledetailMapper, JwR
         List<JwRuledetail> ruledetails = jwRuledetailMapper.selectList(new QueryWrapper<JwRuledetail>().eq("rule_id",ruleId));
         ruledetails.forEach(
                 ruledetail ->{
-                    Integer tableId1 = ruledetail.getTableId();
-                    String fieldName1 = ruledetail.getFieldName();
-                    Integer tableId2 = ruledetail.getMatchtableId();
-                    String fieldName2 = ruledetail.getMatchfieldName();
+                    Integer fieldId = ruledetail.getFieldId()==null?0:ruledetail.getFieldId();
+                    Integer matchFieldId = ruledetail.getMatchfieldId()==null?0:ruledetail.getMatchfieldId();
                     NewTable table1 = new NewTable();
                     NewColumn field1 = new NewColumn();
                     NewTable table2 = new NewTable();
                     NewColumn field2 = new NewColumn();
 
-                    if(tableId1 > 0 && fieldName1.length()> 0){
-                        table1 = newTableMapper.selectById(tableId1);
-                        field1 = newColumnMapper.selectOne(new QueryWrapper<NewColumn>().eq("id",tableId1).eq("columnname",fieldName1));
+                    if(fieldId > 0 ){
+                        field1 = newColumnMapper.selectById(fieldId);
+                        table1 = newTableMapper.selectById(field1.getNewtableId());
                     }
 
-                    if(tableId2 > 0 && fieldName2.length()> 0) {
-                        table2 = newTableMapper.selectById(tableId2);
-                        field2 = newColumnMapper.selectOne(new QueryWrapper<NewColumn>().eq("id",tableId2).eq("columnname",fieldName2));
+                    if(matchFieldId > 0 ){
+                        field2 = newColumnMapper.selectById(matchFieldId);
+                        table2 = newTableMapper.selectById(field2.getNewtableId());
                     }
 
                     result.add(new RuleDetailVo(ruledetail,table1,field1,table2,field2));
@@ -79,17 +77,22 @@ public class JwRuledetailServiceImpl extends ServiceImpl<JwRuledetailMapper, JwR
     }
 
     @Override
-    public void addSubrule(String ruleId, String note, String tableId, String fieldName, String matchType, String pattern, String matchValue, String matchTableId, String matchFieldName) {
+    public void addSubrule(String ruleId, String note, String tableId, String fieldId, String matchType, String pattern, String matchValue, String matchTableId, String matchFieldId) {
         if (jwRuleMapper.selectById(ruleId) == null) {
             throw new IllegalArgumentException("规则不存在，请重试！");
         }
+        NewColumn field = newColumnMapper.selectById(StringUtils.isEmpty(fieldId) ? -1 : Integer.parseInt(fieldId));
+        NewColumn matchfield = newColumnMapper.selectById(StringUtils.isEmpty(matchFieldId) ? -1 : Integer.parseInt(matchFieldId));
         JwRuledetail ruledetail = new JwRuledetail();
-        ruledetail.setTableId(StringUtils.isEmpty(tableId)?0:Integer.parseInt(tableId));
-        ruledetail.setFieldName(fieldName);
+        if(field != null){
+            ruledetail.setFieldId(field.getId());
+        }
         ruledetail.setMatchType(matchType);
         ruledetail.setMatchValue(matchValue);
-        ruledetail.setMatchtableId(StringUtils.isEmpty(matchTableId)?0:Integer.parseInt(matchTableId));
-        ruledetail.setMatchfieldName(matchFieldName);
+        ruledetail.setPattern(pattern);
+        if(matchfield != null){
+            ruledetail.setMatchfieldId(matchfield.getId());
+        }
         ruledetail.setNote(note);
         ruledetail.setCreateTime(DateTime.now());
         ruledetail.setRuleId(Integer.parseInt(ruleId));

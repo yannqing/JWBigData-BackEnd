@@ -6,7 +6,9 @@ import com.wxjw.jwbigdata.service.NewTableService;
 import com.wxjw.jwbigdata.utils.ResultUtils;
 import com.wxjw.jwbigdata.vo.BaseResponse;
 import jakarta.annotation.Resource;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -22,7 +24,7 @@ public class TableController {
     private NewTableService newTableService;
 
     @PostMapping("/getFieldsList")
-    public BaseResponse<Object> getFieldsList(){
+    public BaseResponse<Object> getFieldsList(@RequestParam Integer userId){
         JSONArray result = newTableService.getFieldsList();
         return ResultUtils.success(Code.SUCCESS,result,"获取所有字段");
     }

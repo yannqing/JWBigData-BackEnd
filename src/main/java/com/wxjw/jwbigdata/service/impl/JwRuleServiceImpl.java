@@ -17,23 +17,24 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.UUID;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
-* @author Paul
-* @description 针对表【jw_rule】的数据库操作Service实现
-* @createDate 2024-06-14 14:06:48
-*/
+ * @author Paul
+ * @description 针对表【jw_rule】的数据库操作Service实现
+ * @createDate 2024-06-14 14:06:48
+ */
 @Slf4j
 @Service
 public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
-    implements JwRuleService{
+        implements JwRuleService {
 
     @Resource
     private JwRuleMapper jwRuleMapper;
-    
+
     @Resource
     private JwRuledetailMapper jwRuledetailMapper;
 
@@ -46,33 +47,40 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
     @Resource
     private NewColumnMapper jwFieldMapper;
 
+    @Resource
+    private RelationOfNewtableMapper relationOfNewtableMapper;
+
     @Autowired
     private TableConfig tableConfig;
 
     @Resource
     private ModeltaskMapper modeltaskMapper;
 
+    @Resource
+    private modelResultdbQueryService modelResultdbQueryService;
+
     @Override
-    public void addRule(String userId, String ruleName, String ruleComment, String ruleSteps) {
+    public void addRule(Integer userId, String ruleName, String ruleComment, String ruleSteps) {
         User user = userMapper.selectOne(new QueryWrapper<User>().eq("id", userId));
-        if(user == null)
+        if (user == null)
             throw new IllegalArgumentException("用户不存在，请重试！");
         JwRule rule = new JwRule();
         rule.setRuleName(ruleName);
         rule.setNote(ruleSteps);
         rule.setDescription(ruleComment);
-        rule.setCreateBy(Integer.parseInt(userId));
+        rule.setCreateBy(userId);
         rule.setCreateTime(DateTime.now());
-        if(user.getRole()==1) //管理员:公有模型
+        if (user.getRole() == 1) //管理员:公有模型
             rule.setStatus(1);
         else rule.setStatus(0); //普通用户：私有模型
+        rule.setIsOn(0);
         jwRuleMapper.insert(rule);
         log.info("用户{}新增了一个模型{}", user.getUsername(), ruleName);
     }
 
     @Override
     public void delRule(String[] ruleIds) {
-        Arrays.stream(ruleIds).forEach(ruleId ->{
+        Arrays.stream(ruleIds).forEach(ruleId -> {
             if (jwRuleMapper.selectById(ruleId) == null) {
                 throw new IllegalArgumentException("模型不存在，请重试！");
             }
@@ -82,7 +90,7 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
     }
 
     @Override
-    public void switchRuleStatus(String ruleId, Integer status) {
+    public void switchRuleStatus(Integer ruleId, Integer status) {
         //校验参数是否有效
         JwRule rule = jwRuleMapper.selectById(ruleId);
         if (rule == null) {
@@ -127,22 +135,22 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
 
     @Override
     public JSONObject getRules(String userId) {
-        List<JwRule> publicrules = jwRuleMapper.selectList(new QueryWrapper<JwRule>().eq("status",1).ne("create_by",userId));
+        List<JwRule> publicrules = jwRuleMapper.selectList(new QueryWrapper<JwRule>().eq("status", 1).ne("create_by", userId));
         List<RuleVo> publicruleVos = new ArrayList<>();
         publicrules.forEach(rule -> {
             RuleVo vo = new RuleVo(rule, userMapper.selectById(rule.getCreateBy()));
             publicruleVos.add(vo);
         });
 
-        List<JwRule> privaterules = jwRuleMapper.selectList(new QueryWrapper<JwRule>().eq("create_by",userId));
+        List<JwRule> privaterules = jwRuleMapper.selectList(new QueryWrapper<JwRule>().eq("create_by", userId));
         List<RuleVo> privateruleVos = new ArrayList<>();
         privaterules.forEach(rule -> {
             RuleVo vo = new RuleVo(rule, userMapper.selectById(rule.getCreateBy()));
             privateruleVos.add(vo);
         });
         JSONObject result = new JSONObject();
-        result.put("publicRules",publicruleVos);
-        result.put("privateRules",privateruleVos);
+        result.put("publicRules", publicruleVos);
+        result.put("privateRules", privateruleVos);
         return result;
     }
 
@@ -170,26 +178,25 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
             throw new IllegalArgumentException("启用状态错误！无法修改");
         }
 
-        if(isOn == 0){
+        if (isOn == 0) {
             // 修改为未启用
             //修改状态
             jwRuleMapper.update(new UpdateWrapper<JwRule>()
                     .eq("rule_id", ruleId)
                     .set("is_on", isOn)
             );
-            modeltaskMapper.delete(new QueryWrapper<Modeltask>().eq("modelId",ruleId));
-        }
-        else{
+            modeltaskMapper.delete(new QueryWrapper<Modeltask>().eq("modelId", ruleId));
+        } else {
             // 需生成sql_statement
             List<JwRuledetail> ruledetails = jwRuledetailMapper.selectList(new QueryWrapper<JwRuledetail>().eq("rule_id", ruleId));
 
             //匹配常量
             List<JwRuledetail> ruleDetailsType1 = ruledetails.stream().filter(
-                    ruledetail -> ruledetail.getMatchType().equals("1")
+                    ruledetail -> ruledetail.getMatchType().equals("2")
             ).toList();
             //关联字段
             List<JwRuledetail> ruleDetailsType2 = ruledetails.stream().filter(
-                    ruledetail -> ruledetail.getMatchType().equals("2")
+                    ruledetail -> (ruledetail.getMatchType().equals("1") && ruledetail.getPattern().equals("="))
             ).toList();
             //汇总数量
             List<JwRuledetail> ruleDetailsType3 = ruledetails.stream().filter(
@@ -201,196 +208,262 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
             ).toList();
             //字段比较
             List<JwRuledetail> ruleDetailsType5 = ruledetails.stream().filter(
-                    ruledetail -> ruledetail.getMatchType().equals("5")
+                    ruledetail -> (ruledetail.getMatchType().equals("1") && !ruledetail.getPattern().equals("="))
             ).toList();
             //比较当前日期
             List<JwRuledetail> ruleDetailsType6 = ruledetails.stream().filter(
-                    ruledetail -> ruledetail.getMatchType().equals("6")
+                    ruledetail -> ruledetail.getMatchType().equals("5")
             ).toList();
 
             String selectSql = "";
             String fromSql = "";
-            String whereSql = " WHERE 1=1 ";
+            String whereSql = "";
             String groupbySql = "";
             String havingSql = "";
-            Integer type = -1;
+            int type = -1;
+
+            Set<String> tableset = new HashSet();
+            Set<String> cols = new HashSet();
 
             //循环type2:表字段连接
-            Set<String> tableset = new HashSet();
-            for (JwRuledetail ruleDetail :ruleDetailsType2) {
-                NewTable table1 = jwTableMapper.selectById(ruleDetail.getTableId());
+            for (JwRuledetail ruleDetail : ruleDetailsType2) {
+                Integer fieldId = ruleDetail.getFieldId();
+                NewColumn field1 = jwFieldMapper.selectById(fieldId);
+                NewTable table1 = jwTableMapper.selectById(field1.getNewtableId());
                 String tableName1 = table1.getTablename();
-                NewTable table2 = jwTableMapper.selectById(ruleDetail.getMatchtableId());
-                String tableName2 = table2.getTablename();
-                tableset.add(tableName1);
-                if(ruleDetail.getPattern().equals("=")){
-                    tableset.add(table2.getTablename());
-                    whereSql += " AND "+tableName1+"."+ruleDetail.getFieldName()+" = "+
-                            tableName2+"."+ruleDetail.getMatchfieldName();
-                }
-                else{
-                    whereSql += " AND "+tableName1+"."+ruleDetail.getFieldName()+" NOT IN (SELECT "+
-                            ruleDetail.getMatchfieldName() + " FROM "+ tableName2+") ";
-                }
-            }
-            for(String tableName : tableset)
-            {
-                if(StringUtils.isEmpty(fromSql))
-                {
-                    fromSql += " FROM "+tableName;
-                }
-                else
-                    fromSql += " ,"+tableName;
-            }
-            //模型类型
-            if(tableset.contains(tableConfig.gethumanTable()))
-            {
-                type = 0;
-                selectSql = "SELECT "+tableConfig.gethumanTable()+'.'+tableConfig.gethumanId()+" '身份证号',"+tableConfig.gethumanTable()+'.'+tableConfig.gethumanName()+" '姓名'";
-            }
-            else if(tableset.contains(tableConfig.getcompanyTable()))
-            {
-                type = 1;
-                selectSql = "SELECT "+tableConfig.getcompanyTable()+'.'+tableConfig.getcompanyId()+" '单位识别号',"+tableConfig.getcompanyTable()+'.'+tableConfig.getcompanyName()+" '名称'";
-            }
-            else{
-                throw new IllegalArgumentException("模型必须关联人物主表（"+tableConfig.gethumanTable()+"）或单位主表（"+tableConfig.getcompanyTable()+"）！");
-            }
+                String tableComment1 = table1.getComment();
+                String fieldName1 = field1.getColumnname();
+                String fieldComment1 = field1.getComment();
 
+                Integer matchFieldId = ruleDetail.getMatchfieldId();
+                NewColumn field2 = jwFieldMapper.selectById(matchFieldId);
+                NewTable table2 = jwTableMapper.selectById(field2.getNewtableId());
+                String tableName2 = table2.getTablename();
+                String tableComment2 = table2.getComment();
+                String fieldName2 = field2.getColumnname();
+                String fieldComment2 = field2.getComment();
+
+                tableset.add(tableName1);
+                tableset.add(tableName2);
+
+                whereSql += " AND " + tableName1 + "." + fieldName1 + ruleDetail.getPattern() +
+                        tableName2 + "." + fieldName2;
+                if (cols.add("`" + tableComment1 + "." + fieldComment1 + "`")) {
+                    selectSql += "," + tableName1 + "." + fieldName1 + " '" + tableComment1 + "." + fieldComment1 + "'";
+                }
+                if (cols.add("`" + tableComment2 + "." + fieldComment2 + "`")) {
+                    selectSql += "," + tableName2 + "." + fieldName2 + " '" + tableComment2 + "." + fieldComment2 + "'";
+                }
+            }
 
             //循环type1:表字段匹配常量
-            for (JwRuledetail ruleDetail1:ruleDetailsType1) {
-                NewTable table1 = jwTableMapper.selectById(ruleDetail1.getTableId());
-                String tableName1 = table1.getTablename();
-                if(tableset.contains(tableName1))
-                {
-                    String marchvalue = ruleDetail1.getMatchValue();
-                    String fieldName = ruleDetail1.getFieldName();
-                    NewColumn field = jwFieldMapper.selectOne(new QueryWrapper<NewColumn>().eq("id",table1.getId()).eq("columnname",fieldName));
-                    //如果不是数字类型，需要特殊拼接处理
+            for (JwRuledetail ruleDetail1 : ruleDetailsType1) {
+                Integer fieldId = ruleDetail1.getFieldId();
+                NewColumn field = jwFieldMapper.selectById(fieldId);
+                NewTable table = jwTableMapper.selectById(field.getNewtableId());
+                String tableName = table.getTablename();
+                String tableComment = table.getComment();
+                tableset.add(tableName);
 
-                    if(ruleDetail1.getPattern().equals("like"))
-                    {
-                        marchvalue = "'%"+marchvalue+"%'";
-                    }
-                    else marchvalue = "'"+marchvalue+"'";
+                String marchvalue = ruleDetail1.getMatchValue();
+                String fieldName = field.getColumnname();
+                String fieldComment = field.getComment();
+                //如果不是数字类型，需要特殊拼接处理
 
-                    selectSql += ","+tableName1+"."+ruleDetail1.getFieldName()+" '"+tableName1+"-"+fieldName+"'";
-                    whereSql += " AND "+tableName1+"."+ruleDetail1.getFieldName()+" "+
-                            ruleDetail1.getPattern()+marchvalue;
+                if (ruleDetail1.getPattern().equals("like")) {
+                    marchvalue = "'%" + marchvalue + "%'";
+                } else marchvalue = "'" + marchvalue + "'";
+
+                whereSql += " AND " + tableName + "." + fieldName + " " +
+                        ruleDetail1.getPattern() + marchvalue;
+                if (cols.add("`" + tableComment + "." + fieldComment + "`")) {
+                    selectSql += "," + tableName + "." + fieldName + " '" + tableComment + "." + fieldComment + "'";
                 }
             }
 
             //循环type5:表字段与字段间匹配差额
-            for (JwRuledetail ruleDetail5:ruleDetailsType5) {
-                NewTable table1 = jwTableMapper.selectById(ruleDetail5.getTableId());
+            for (JwRuledetail ruleDetail5 : ruleDetailsType5) {
+                Integer fieldId = ruleDetail5.getFieldId();
+                NewColumn field1 = jwFieldMapper.selectById(fieldId);
+                NewTable table1 = jwTableMapper.selectById(field1.getNewtableId());
                 String tableName1 = table1.getTablename();
-                NewTable table2 = jwTableMapper.selectById(ruleDetail5.getMatchtableId());
+                String tableComment1 = table1.getComment();
+                String fieldName1 = field1.getColumnname();
+                String fieldComment1 = field1.getComment();
+
+                Integer matchFieldId = ruleDetail5.getMatchfieldId();
+                NewColumn field2 = jwFieldMapper.selectById(matchFieldId);
+                NewTable table2 = jwTableMapper.selectById(field2.getNewtableId());
                 String tableName2 = table2.getTablename();
+                String tableComment2 = table2.getComment();
+                String fieldName2 = field2.getColumnname();
+                String fieldComment2 = field2.getComment();
+
                 String marchvalue = ruleDetail5.getMatchValue();
-                String fieldName1 = ruleDetail5.getFieldName();
-                String fieldName2 = ruleDetail5.getMatchfieldName();
-                if(tableset.contains(tableName1) && tableset.contains(tableName2) && !ruleDetail5.getPattern().contains("s"))
-                {
-                    selectSql += ","+tableName1+"."+ruleDetail5.getFieldName()+" - "+
-                            tableName2+"."+ruleDetail5.getMatchfieldName();
-                    whereSql += " AND "+tableName1+"."+ruleDetail5.getFieldName()+" - "+
-                            tableName2+"."+ruleDetail5.getMatchfieldName()+ruleDetail5.getPattern()+ marchvalue;
-                }
-                else if(tableset.contains(tableName1) && tableset.contains(tableName2) && ruleDetail5.getPattern().contains("s"))
-                {
+
+                if (!ruleDetail5.getPattern().contains("s")) {
+                    whereSql += " AND " + tableName1 + "." + fieldName1 + " - " +
+                            tableName2 + "." + fieldName2 + ruleDetail5.getPattern() + marchvalue;
+                    if (cols.add("`" + tableComment1 + "." + fieldComment1 + "-" + tableComment2 + "." + fieldComment2 + "`")) {
+                        selectSql += "," + tableName1 + "." + fieldName1 + " - " +
+                                tableName2 + "." + fieldName2 + " '" + tableComment1 + "." + fieldComment1 + "-" + tableComment2 + "." + fieldComment2 + "'";
+                    }
+                } else {
                     String pattern = ruleDetail5.getPattern().substring(1);
-                    selectSql += ",SUM("+tableName1+"."+ruleDetail5.getFieldName()+") - SUM("+
-                            tableName2+"."+ruleDetail5.getMatchfieldName()+") ";
-                    if(StringUtils.isEmpty(groupbySql)){
-                        if(type == 0)
-                            groupbySql = " GROUP BY "+tableConfig.gethumanTable()+"."+tableConfig.gethumanId();
-                        else if(type == 1)
-                            groupbySql = " GROUP BY "+tableConfig.getcompanyTable()+"."+tableConfig.getcompanyId();
+                    selectSql += ",SUM(" + tableName1 + "." + fieldName1 + ") - SUM(" +
+                            tableName2 + "." + fieldName2 + ") '合计(" + tableComment1 + "." + fieldComment1 + ")-合计(" + tableComment2 + "." + fieldComment2 + ")'";
+                    if (StringUtils.isEmpty(groupbySql)) {
+                        groupbySql = " GROUP BY ";
                     }
-                    if(StringUtils.isEmpty(havingSql)){
-                        havingSql += " HAVING SUM("+tableName1+"."+ruleDetail5.getFieldName()+") - SUM("+
-                                tableName2+"."+ruleDetail5.getMatchfieldName()+") "+pattern+ marchvalue;
+                    if (StringUtils.isEmpty(havingSql)) {
+                        havingSql += " HAVING SUM(" + tableName1 + "." + fieldName1 + ") - SUM(" +
+                                tableName2 + "." + fieldName2 + ") " + pattern + marchvalue;
+                    } else {
+                        havingSql += " AND SUM(" + tableName1 + "." + fieldName1 + ") - SUM(" +
+                                tableName2 + "." + fieldName2 + ") " + pattern + marchvalue;
                     }
-                    else{
-                        havingSql += " AND SUM("+tableName1+"."+ruleDetail5.getFieldName()+") - SUM("+
-                                tableName2+"."+ruleDetail5.getMatchfieldName()+") "+pattern+ marchvalue;
-                    }
+                    cols.add("`合计(" + tableComment1 + "." + fieldComment1 + ")-合计(" + tableComment2 + "." + fieldComment2 + ")`");
                 }
             }
 
             //循环type6:日期字段筛选多少天以内
-            for (JwRuledetail ruleDetail6:ruleDetailsType6) {
-                NewTable table1 = jwTableMapper.selectById(ruleDetail6.getTableId());
-                String tableName1 = table1.getTablename();
-                if(tableset.contains(tableName1))
-                {
-                    String marchvalue = ruleDetail6.getMatchValue();
-                    whereSql += " AND DATEDIFF(CURDATE(),STR_TO_DATE("+tableName1+"."+ruleDetail6.getFieldName()+")) > "+ marchvalue;
+            for (JwRuledetail ruleDetail6 : ruleDetailsType6) {
+                Integer fieldId = ruleDetail6.getFieldId();
+                NewColumn field = jwFieldMapper.selectById(fieldId);
+                NewTable table = jwTableMapper.selectById(field.getNewtableId());
+                String tableName = table.getTablename();
+                String tableComment = table.getComment();
+                String fieldName = field.getColumnname();
+                String fieldComment = field.getComment();
+                tableset.add(tableName);
+
+                String marchvalue = ruleDetail6.getMatchValue();
+                whereSql += " AND DATEDIFF(CURDATE(),STR_TO_DATE(" + tableName + "." + field.getColumnname() + ")) > " + marchvalue;
+                if (cols.add("`" + tableComment + "." + fieldComment + "`")) {
+                    selectSql += "," + tableName + "." + fieldName + " '" + tableComment + "." + fieldComment + "'";
                 }
             }
 
             //循环type3:汇总数量条件
-            for (JwRuledetail ruleDetail3 :ruleDetailsType3) {
-                NewTable table1 = jwTableMapper.selectById(ruleDetail3.getTableId());
-                String tableName1 = table1.getTablename();
+            for (JwRuledetail ruleDetail3 : ruleDetailsType3) {
+                Integer fieldId = ruleDetail3.getFieldId();
+                NewColumn field = jwFieldMapper.selectById(fieldId);
+                NewTable table = jwTableMapper.selectById(field.getNewtableId());
+                String tableName = table.getTablename();
+                String tableComment = table.getComment();
                 String marchvalue = ruleDetail3.getMatchValue();
-                if(tableset.contains(tableName1)){
-                    selectSql += ",COUNT("+tableName1+"."+ruleDetail3.getFieldName()+") ";
-                    if(StringUtils.isEmpty(groupbySql)){
-                        if(type == 0)
-                            groupbySql = " GROUP BY "+tableConfig.gethumanTable()+"."+tableConfig.gethumanId();
-                        else if(type == 1)
-                            groupbySql = " GROUP BY "+tableConfig.getcompanyTable()+"."+tableConfig.getcompanyId();
-                    }
-                    if(StringUtils.isEmpty(havingSql)){
-                        havingSql += " HAVING COUNT("+tableName1+"."+ruleDetail3.getFieldName()+") "+
-                                ruleDetail3.getPattern()+ marchvalue;
-                    }
-                    else{
-                        havingSql += " AND COUNT("+tableName1+"."+ruleDetail3.getFieldName()+") "+
-                                ruleDetail3.getPattern()+ marchvalue;
-                    }
+                tableset.add(tableName);
+
+                selectSql += ",COUNT(" + tableName + "." + field.getColumnname() + ") '数量(" + tableComment + "." + field.getComment() + ")'";
+                cols.add("`数量(" + tableComment + "." + field.getComment() + ")`");
+                if (StringUtils.isEmpty(groupbySql)) {
+                    groupbySql = " GROUP BY ";
+                }
+
+                if (StringUtils.isEmpty(havingSql)) {
+                    havingSql += " HAVING COUNT(" + tableName + "." + field.getColumnname() + ") " +
+                            ruleDetail3.getPattern() + marchvalue;
+                }
+                else {
+                    havingSql += " AND COUNT(" + tableName + "." + field.getColumnname() + ") " +
+                            ruleDetail3.getPattern() + marchvalue;
                 }
             }
 
             //循环type4:汇总合计条件
-            for (JwRuledetail ruleDetail4 :ruleDetailsType4) {
-                NewTable table1 = jwTableMapper.selectById(ruleDetail4.getTableId());
-                String tableName1 = table1.getTablename();
+            for (JwRuledetail ruleDetail4 : ruleDetailsType4) {
+                Integer fieldId = ruleDetail4.getFieldId();
+                NewColumn field = jwFieldMapper.selectById(fieldId);
+                NewTable table = jwTableMapper.selectById(field.getNewtableId());
+                String tableName = table.getTablename();
+                String tableComment = table.getComment();
                 String marchvalue = ruleDetail4.getMatchValue();
-                if(tableset.contains(tableName1)){
-                    selectSql += ",SUM("+tableName1+"."+ruleDetail4.getFieldName()+") ";
-                    if(StringUtils.isEmpty(groupbySql)){
-                        if(type == 0)
-                            groupbySql = " GROUP BY "+tableConfig.gethumanTable()+"."+tableConfig.gethumanId();
-                        else if(type == 1)
-                            groupbySql = " GROUP BY "+tableConfig.getcompanyTable()+"."+tableConfig.getcompanyId();
-                    }
-                    if(StringUtils.isEmpty(havingSql)){
-                        havingSql += " HAVING SUM("+tableName1+"."+ruleDetail4.getFieldName()+") "+
-                                ruleDetail4.getPattern()+ marchvalue;
-                    }
-                    else{
-                        havingSql += " AND SUM("+tableName1+"."+ruleDetail4.getFieldName()+") "+
-                                ruleDetail4.getPattern()+ marchvalue;
-                    }
+                tableset.add(tableName);
+
+                selectSql += ",SUM(" + tableName + "." + field.getColumnname() + ") '合计(" + tableComment + "." + field.getComment() + ")'";
+                cols.add("`合计(" + tableComment + "." + field.getComment() + ")`");
+                if (StringUtils.isEmpty(groupbySql)) {
+                    groupbySql = " GROUP BY ";
+                }
+                if (StringUtils.isEmpty(havingSql)) {
+                    havingSql += " HAVING SUM(" + tableName + "." + field.getColumnname() + ") " +
+                            ruleDetail4.getPattern() + marchvalue;
+                } else {
+                    havingSql += " AND SUM(" + tableName + "." + field.getColumnname() + ") " +
+                            ruleDetail4.getPattern() + marchvalue;
                 }
             }
 
-            if(!tableset.isEmpty()){
-                String sql = selectSql+fromSql+whereSql+groupbySql+havingSql;
+            if (!tableset.isEmpty()) {
+                Set<String> newtableset = new HashSet();
+                for (String tablename : tableset) {
+                    newtableset.add(tablename);
+                    if (!tablename.equals(tableConfig.gethumanTable()) && !tablename.equals(tableConfig.getcompanyTable())) {
+                        NewTable table = jwTableMapper.selectOne(new QueryWrapper<NewTable>().eq("tablename", tablename));
+                        Integer tableId = table.getId();
+                        RelationOfNewtable relationOfNewtable = relationOfNewtableMapper.selectOne(new QueryWrapper<RelationOfNewtable>().eq("newtable_id", tableId));
+                        String label = relationOfNewtable.getLabel();
+                        // 当前表为人物相关
+                        if (label.equals("human")) {
+                            newtableset.add(tableConfig.gethumanTable());
+                            String wSql = " AND " + tableConfig.gethumanTable() + '.' + tableConfig.gethumanPk() + " = " + tablename + '.' + tableConfig.getHumanFk();
+                            if (!whereSql.contains(wSql)) {
+                                whereSql = wSql + whereSql;
+                            }
+                        } else if (label.equals("unit")) {
+                            newtableset.add(tableConfig.getcompanyTable());
+                            String wSql = " AND " + tableConfig.getcompanyTable() + '.' + tableConfig.getcompanyPk() + " = " + tablename + '.' + tableConfig.getCompanyFk();
+                            if (!whereSql.contains(wSql)) {
+                                whereSql = wSql + whereSql;
+                            }
+                        }
+                    }
+                }
+                tableset = newtableset;
+                //模型类型:优先级：任务-单位-事件
+                if (tableset.contains(tableConfig.gethumanTable())) {
+                    type = 0;
+                    cols.add("身份证号");
+                    cols.add("姓名");
+                    selectSql = "SELECT " + tableConfig.gethumanTable() + '.' + tableConfig.gethumanId() + " '身份证号'," + tableConfig.gethumanTable() + '.' + tableConfig.gethumanName() + " '姓名'" + selectSql;
+                    if (groupbySql == " GROUP BY ") {
+                        groupbySql += tableConfig.gethumanTable() + '.' + tableConfig.gethumanPk();
+                    }
+                } else if (tableset.contains(tableConfig.getcompanyTable())) {
+                    type = 1;
+                    cols.add("单位识别号");
+                    cols.add("名称");
+                    selectSql = "SELECT " + tableConfig.getcompanyTable() + '.' + tableConfig.getcompanyId() + " '单位识别号'," + tableConfig.getcompanyTable() + '.' + tableConfig.getcompanyName() + " '名称'" + selectSql;
+                    if (groupbySql == " GROUP BY ") {
+                        groupbySql += tableConfig.getcompanyTable() + '.' + tableConfig.getcompanyPk();
+                    }
+                }
+                for (String tableName : tableset) {
+                    if (StringUtils.isEmpty(fromSql)) {
+                        fromSql += " FROM " + tableName;
+                    } else
+                        fromSql += " ," + tableName;
+                }
+
+                whereSql = " WHERE 1=1 " + whereSql;
+                String sql = selectSql + fromSql + whereSql + groupbySql + havingSql;
                 System.out.println(sql);
 
                 // 创建结果表
-                String resultTableName = UUID.randomUUID().toString().replace("-","");
-                modeltaskMapper.createNewTable(resultTableName,sql.replace(" 1=1 "," 1=0 "));
+                String resultTableName = UUID.randomUUID().toString().replace("-", "");
+                String columnNames = " (";
+                for (String col : cols) {
+                    columnNames += col + " varchar(255),";
+                }
+                columnNames = columnNames.substring(0, columnNames.length() - 1) + ")";
+                modelResultdbQueryService.createNewTable(resultTableName, columnNames);
                 // 修改为启用
                 jwRuleMapper.update(new UpdateWrapper<JwRule>()
                         .eq("rule_id", ruleId)
                         .set("sql_statement", sql)
-                        .set("result_table",resultTableName)
-                        .set("is_on",1)
+                        .set("result_table", resultTableName)
+                        .set("type", type)
+                        .set("is_on", 1)
                 );
                 Modeltask modeltask = new Modeltask();
                 modeltask.setTask(sql);
@@ -401,6 +474,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 modeltaskMapper.insert(modeltask);
 
                 log.info("修改{}模型的状态成功", rule.getRuleName());
+            } else {
+                throw new IllegalArgumentException("规则条目存在问题，请联系管理员！");
             }
 
         }
@@ -409,75 +484,65 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
     }
 
     @Override
-    public JSONArray getRuleResult(String ruleId) {
+    public JSONObject getRuleResult(String ruleId) {
         //校验参数是否有效
         JwRule rule = jwRuleMapper.selectById(ruleId);
         if (rule == null) {
             throw new IllegalArgumentException("模型不存在，请重试！");
-        }
-        else if(rule.getIsOn() == 0){
-            throw new IllegalArgumentException("模型未启动，无法查看结果！");
-        }
-        else if(StringUtils.isEmpty(rule.getResultTable())){
+        } else if (StringUtils.isEmpty(rule.getResultTable())) {
             throw new IllegalArgumentException("模型结果表不存在，请联系管理员！");
         }
 
         String resultTable = rule.getResultTable();
-        Map<String, Object> tableExist = modeltaskMapper.tableExist(resultTable);
-        if(tableExist != null){
+        List<Map<String, Object>> tableExist = modelResultdbQueryService.tableExist(resultTable);
+        if (tableExist != null) {
             //结果表存在
             JSONArray details = new JSONArray();
-            List<Map<String, Object>> maps = modeltaskMapper.resultTable(resultTable);
+            List<Map<String, Object>> maps = modelResultdbQueryService.resultTable(resultTable);
             maps.forEach(
-                    map ->{
+                    map -> {
                         JSONObject jsonObject = new JSONObject(map);
                         details.add(jsonObject);
                     }
             );
-            if(rule.getType() == 0){
-                JSONArray result = new JSONArray();
-                result.add(new JSONObject().put("personInfo",details));
-                return result;
-            }
-            else if(rule.getType() == 1){
-                JSONArray result = new JSONArray();
-                result.add(new JSONObject().put("companyInfo",details));
-                return result;
-            }
-            else
-                throw new IllegalArgumentException("模型类型异常！");
-        }
-        else
-        {
+
+            JSONObject result = new JSONObject();
+            if (rule.getType() == 0) {
+                result.put("personInfo", details);
+                result.put("companyInfo", new JSONArray());
+            } else if (rule.getType() == 1) {
+                result.put("personInfo", new JSONArray());
+                result.put("companyInfo", details);
+            } else throw new IllegalArgumentException("模型类型异常，请联系管理员！");
+            return result;
+        } else {
             throw new IllegalArgumentException("模型结果表不存在，请联系管理员！");
         }
     }
 
     @Override
-    public JSONObject getResultDetail(String ruleId,String id) {
+    public JSONArray getResultDetail(String ruleId, String id) {
         //校验参数是否有效
         JwRule rule = jwRuleMapper.selectById(ruleId);
-        JSONObject result;
+        JSONArray result;
         if (rule == null) {
             throw new IllegalArgumentException("模型不存在，请重试！");
-        }else if(rule.getIsOn()<0 || StringUtils.isEmpty(rule.getResultTable())){
+        } else if (rule.getIsOn() < 0 || StringUtils.isEmpty(rule.getResultTable())) {
             throw new IllegalArgumentException("模型未启用，请联系管理员！");
         }
-        else if(rule.getType() == 0){
-            //人物模型
-            String tableName = rule.getResultTable();
-            Map<String, Object> stringObjectMap = modeltaskMapper.resultDetail(tableName, tableConfig.gethumanId(), id);
-            result = new JSONObject(stringObjectMap);
-            return result;
-        }
-        else if(rule.getType() == 1){
-            //单位模型
-            String tableName = rule.getResultTable();
-            Map<String, Object> stringObjectMap = modeltaskMapper.resultDetail(tableName, tableConfig.getcompanyId(), id);
-            result = new JSONObject(stringObjectMap);
-            return result;
-        }
-        else throw new IllegalArgumentException("模型类别异常，请联系管理员！");
+
+
+        String tableName = rule.getResultTable();
+        List<Map<String, Object>> stringObjectMap = modelResultdbQueryService.resultDetail(tableName, tableConfig.gethumanId(), id);
+        result = new JSONArray(stringObjectMap);
+        return result;
+
+
+    }
+
+    @Override
+    public JwRule getRuleById(String ruleId) {
+        return jwRuleMapper.selectById(ruleId);
     }
 
 

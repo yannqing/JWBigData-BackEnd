@@ -20,10 +20,10 @@ public class NewTable implements Serializable {
     @TableId(type = IdType.AUTO)
     private Integer id;
 
-    /**
-     * 
-     */
-    private Integer oldtableId;
+//    /**
+//     *
+//     */
+//    private Integer oldtableId;
 
     /**
      * 
@@ -56,7 +56,7 @@ public class NewTable implements Serializable {
         }
         NewTable other = (NewTable) that;
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
-            && (this.getOldtableId() == null ? other.getOldtableId() == null : this.getOldtableId().equals(other.getOldtableId()))
+//            && (this.getOldtableId() == null ? other.getOldtableId() == null : this.getOldtableId().equals(other.getOldtableId()))
             && (this.getDbname() == null ? other.getDbname() == null : this.getDbname().equals(other.getDbname()))
             && (this.getTablename() == null ? other.getTablename() == null : this.getTablename().equals(other.getTablename()))
             && (this.getComment() == null ? other.getComment() == null : this.getComment().equals(other.getComment()));
@@ -67,7 +67,7 @@ public class NewTable implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
-        result = prime * result + ((getOldtableId() == null) ? 0 : getOldtableId().hashCode());
+//        result = prime * result + ((getOldtableId() == null) ? 0 : getOldtableId().hashCode());
         result = prime * result + ((getDbname() == null) ? 0 : getDbname().hashCode());
         result = prime * result + ((getTablename() == null) ? 0 : getTablename().hashCode());
         result = prime * result + ((getComment() == null) ? 0 : getComment().hashCode());
@@ -81,7 +81,7 @@ public class NewTable implements Serializable {
         sb.append(" [");
         sb.append("Hash = ").append(hashCode());
         sb.append(", id=").append(id);
-        sb.append(", oldtableId=").append(oldtableId);
+//        sb.append(", oldtableId=").append(oldtableId);
         sb.append(", dbname=").append(dbname);
         sb.append(", tablename=").append(tablename);
         sb.append(", comment=").append(comment);

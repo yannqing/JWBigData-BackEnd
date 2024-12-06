@@ -8,13 +8,13 @@
             <id property="id" column="Id" jdbcType="INTEGER"/>
             <result property="newtableId" column="newtable_id" jdbcType="INTEGER"/>
             <result property="label" column="label" jdbcType="VARCHAR"/>
-            <result property="sunlable" column="sunlable" jdbcType="VARCHAR"/>
+            <result property="sunlabel" column="sunlabel" jdbcType="VARCHAR"/>
             <result property="preSerial" column="pre_serial" jdbcType="VARCHAR"/>
             <result property="descript" column="descript" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         Id,newtable_id,label,
-        sunlable,pre_serial,descript
+        sunlabel,pre_serial,descript
     </sql>
 </mapper>

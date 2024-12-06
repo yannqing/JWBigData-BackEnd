@@ -18,13 +18,21 @@ public interface UserService extends IService<User> {
 
     List<UserVo> getUserList();
 
-    void addUser(String userName, String realName, Integer dept, String duties, String phone, HttpServletRequest request) throws JsonProcessingException;
+    void addUser(String userName, String realName, String dept, String duties, String phone, HttpServletRequest request) throws JsonProcessingException;
 
-    void switchUserStatus(String userId, Integer status);
+    void switchUserStatus(int userId, int status);
 
-    void delUser(String[] userId);
+    void switchDeptStatus(int deptId, int status);
 
-    void initPwd(String[] userId);
+    void delUser(int[] userId);
 
-    void switchUserAuth(String userId, Integer[] auth);
+    void delDept(int[] deptId);
+
+    void initPwd(int[] userId);
+
+    void switchUserAuth(Integer userId, Boolean[] auth);
+
+    void addDept(String deptName, HttpServletRequest request) throws JsonProcessingException;
+
+    void updataDeptInfo(int deptId, String deptName);
 }

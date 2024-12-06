@@ -33,7 +33,7 @@ public class RelationOfNewtable implements Serializable {
     /**
      * 
      */
-    private String sunlable;
+    private String sunlabel;
 
     /**
      * 
@@ -44,6 +44,7 @@ public class RelationOfNewtable implements Serializable {
      * 
      */
     private String descript;
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
@@ -63,9 +64,10 @@ public class RelationOfNewtable implements Serializable {
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
             && (this.getNewtableId() == null ? other.getNewtableId() == null : this.getNewtableId().equals(other.getNewtableId()))
             && (this.getLabel() == null ? other.getLabel() == null : this.getLabel().equals(other.getLabel()))
-            && (this.getSunlable() == null ? other.getSunlable() == null : this.getSunlable().equals(other.getSunlable()))
+            && (this.getSunlabel() == null ? other.getSunlabel() == null : this.getSunlabel().equals(other.getSunlabel()))
             && (this.getPreSerial() == null ? other.getPreSerial() == null : this.getPreSerial().equals(other.getPreSerial()))
             && (this.getDescript() == null ? other.getDescript() == null : this.getDescript().equals(other.getDescript()));
+
     }
 
     @Override
@@ -75,7 +77,7 @@ public class RelationOfNewtable implements Serializable {
         result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
         result = prime * result + ((getNewtableId() == null) ? 0 : getNewtableId().hashCode());
         result = prime * result + ((getLabel() == null) ? 0 : getLabel().hashCode());
-        result = prime * result + ((getSunlable() == null) ? 0 : getSunlable().hashCode());
+        result = prime * result + ((getSunlabel() == null) ? 0 : getSunlabel().hashCode());
         result = prime * result + ((getPreSerial() == null) ? 0 : getPreSerial().hashCode());
         result = prime * result + ((getDescript() == null) ? 0 : getDescript().hashCode());
         return result;
@@ -90,7 +92,7 @@ public class RelationOfNewtable implements Serializable {
         sb.append(", id=").append(id);
         sb.append(", newtableId=").append(newtableId);
         sb.append(", label=").append(label);
-        sb.append(", sunlable=").append(sunlable);
+        sb.append(", sunlabel=").append(sunlabel);
         sb.append(", preSerial=").append(preSerial);
         sb.append(", descript=").append(descript);
         sb.append(", serialVersionUID=").append(serialVersionUID);

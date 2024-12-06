@@ -1,9 +1,16 @@
 package com.wxjw.jwbigdata.vo.UserVo;
 
 import com.wxjw.jwbigdata.domain.User;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserVo {
     private Integer userId;
     private String userName;
@@ -11,15 +18,23 @@ public class UserVo {
     private String dept;
     private String duties;
     private String phone;
-    private Integer status;
+    private boolean status;
+    private ArrayList<Boolean> auth;
 
     public UserVo(User user, String dept) {
         this.userId = user.getId();
         this.userName = user.getUserAccount();
         this.realName = user.getUsername();
-        this.dept = dept;
+        if(!dept.isEmpty()){
+            this.dept = dept;
+        }
         this.duties = user.getPosition();
         this.phone = user.getPhone();
-        this.status = user.getStatus();
+        this.status = user.getStatus()==0?true:false;
+        auth = new ArrayList<>();
+        this.auth.add(user.getRole()==0?false:true);
+        this.auth.add(user.getPortrait()==0?false:true);
+        this.auth.add(user.getCompare()==0?false:true);
+        this.auth.add(user.getModel()==0?false:true);
     }
 }

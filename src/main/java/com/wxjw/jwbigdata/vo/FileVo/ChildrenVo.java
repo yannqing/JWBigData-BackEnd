@@ -12,6 +12,7 @@ import java.util.List;
 public class ChildrenVo {
     private String id;
     private String label;
+    private String father;
     private boolean draggable;
     private List<ChildrenVo> children;
 }

@@ -23,15 +23,27 @@
     <insert id="createTable" parameterType="map">
         create table `${tableName}` (
         <foreach collection="columns" item="listItem" separator=",">
-            ${listItem} varchar(255)
+            `${listItem}` varchar(255)
         </foreach>
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8
     </insert>
 
     <select id = "selectColumns" parameterType="map" resultType="String">
-        select ${columns}
-        from ${tableName}
+        select `${columns}`
+        from `${tableName}`
     </select>
 
+    <select id="selectColumnsByParams" resultType="java.util.Map">
+        select * from
+        `${tableName}`
+        where
+        <foreach collection="columns" item="key" separator=" or ">
+            `${key}` = #{keyWord}
+        </foreach>
+    </select>
+
+    <insert id="createTableBySQL" parameterType="map">
+        ${sql}
+    </insert>
 
 </mapper>

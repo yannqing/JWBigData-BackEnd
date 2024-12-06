@@ -15,15 +15,13 @@ import java.util.List;
  **/
 @Data
 public class TableVo {
-    private Integer tableId;
-    private String tableName;
-    private String description;
-    private List<NewColumn> children;
+    private Integer id;
+    private String label;
+    private List<ColumnVo> children;
 
-    public TableVo(NewTable newTable, List<NewColumn> newColumns){
-        this.tableId = newTable.getId();
-        this.tableName = newTable.getTablename();
-        this.description = newTable.getComment();
+    public TableVo(NewTable newTable, List<ColumnVo> newColumns){
+        this.id = newTable.getId();
+        this.label = newTable.getComment();
         this.children = newColumns;
     }
 

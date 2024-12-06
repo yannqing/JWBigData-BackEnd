@@ -18,11 +18,11 @@ import java.util.List;
 * @createDate 2024-06-14 14:06:48
 */
 public interface JwRuleService extends IService<JwRule> {
-    void addRule(String userId, String ruleName,String ruleComment, String ruleSteps) throws JsonProcessingException;
+    void addRule(Integer userId, String ruleName,String ruleComment, String ruleSteps) throws JsonProcessingException;
 
     void delRule(String[] ruleId);
 
-    void switchRuleStatus(String ruleId, Integer status);
+    void switchRuleStatus(Integer ruleId, Integer status);
 
     List<RuleVo> getRuleList();
 
@@ -34,9 +34,11 @@ public interface JwRuleService extends IService<JwRule> {
 
     void switchRuleOn(String ruleId, Integer isOn);
 
-    JSONArray getRuleResult(String ruleId);
+    JSONObject getRuleResult(String ruleId);
 
-    JSONObject getResultDetail(String ruleId,String id);
+    JSONArray getResultDetail(String ruleId,String id);
+
+    JwRule getRuleById(String ruleId);
 
 
 }

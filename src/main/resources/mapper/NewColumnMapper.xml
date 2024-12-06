@@ -9,11 +9,10 @@
             <result property="newtableId" column="newtable_id" jdbcType="INTEGER"/>
             <result property="columnname" column="columnname" jdbcType="VARCHAR"/>
             <result property="comment" column="comment" jdbcType="VARCHAR"/>
-            <result property="flag" column="flag" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         Id,newtable_id,columnname,
-        comment,flag
+        comment
     </sql>
 </mapper>

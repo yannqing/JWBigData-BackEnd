@@ -6,26 +6,30 @@
 
     <resultMap id="BaseResultMap" type="com.wxjw.jwbigdata.domain.NewTable">
             <id property="id" column="Id" jdbcType="INTEGER"/>
-            <result property="oldtableId" column="oldtable_id" jdbcType="INTEGER"/>
-            <result property="dbname" column="DbName" jdbcType="VARCHAR"/>
+<!--            <result property="oldtableId" column="oldtable_id" jdbcType="INTEGER"/>-->
+            <result property="dbname" column="dbName" jdbcType="VARCHAR"/>
             <result property="tablename" column="tablename" jdbcType="VARCHAR"/>
             <result property="comment" column="Comment" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        Id,oldtable_id,DbName,
+        Id,dbName,
         tablename,Comment
     </sql>
 
-    <select id="tableSelect" parameterType="String" resultType="java.util.ArrayList">
-        select * from ${tableName} where ${fieldName} = ${value}
-    </select>
+<!--    <select id="tableSelect" parameterType="String" resultType="java.util.ArrayList">-->
+<!--        select * from ${tableName} where ${fieldName} = #{value}-->
+<!--    </select>-->
 
-    <select id="tableCleanSelect" parameterType="String" resultType="java.util.ArrayList">
-        select * from ${tableName} where ${fieldName} = ${value}
-    </select>
+<!--    <select id="tableNewSelect" parameterType="String" resultType="java.util.ArrayList">-->
+<!--            select * from ${tableName} where ${fieldName} = #{value}-->
+<!--    </select>-->
 
-    <select id="tableCleanMultiSelect" parameterType="String" resultType="java.util.ArrayList">
-        select * from ${tableName} where ${fieldName1} = ${value} or ${fieldName2} = ${value}
-    </select>
+<!--    <select id="tableNewSelect1" parameterType="String" resultType="java.util.ArrayList">-->
+<!--        select * from pbasicinfo-->
+<!--    </select>-->
+
+<!--    <select id="tableNewMultiSelect" parameterType="String" resultType="java.util.ArrayList">-->
+<!--            select * from ${tableName} where ${fieldName1} = #{value} or ${fieldName2} = ${value}-->
+<!--    </select>-->
 </mapper>

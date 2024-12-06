@@ -10,10 +10,10 @@ import java.util.Map;
 
 @Mapper
 public interface OperationMapper extends BaseMapper<Map<String, String>> {
-    @Select("select * from #{tableName}")
-    List<List<Object>> getData(String tableName);
+    @Select("select * from `${tableName}`")
+    List<Map<String,Object>> getData(String tableName);
 
-    @Delete("drop table ${tableName}")
+    @Delete("drop table if exists `${tableName}`")
     void dropTable(String tableName);
 
     void dynamicInsert(String tableName, List<String> columns, List<String> values);

@@ -20,6 +20,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,7 +48,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         //验证token的合法性，不报错即合法
 
         String redisToken = redisCache.getCacheObject("token:" + token);
-
+        log.info(token);
         if (redisToken==null) {
             response.setStatus(200);
             response.setContentType("application/json;charset=utf-8");

@@ -35,10 +35,6 @@ public class NewColumn implements Serializable {
      */
     private String comment;
 
-    /**
-     * 
-     */
-    private String flag;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
@@ -58,8 +54,7 @@ public class NewColumn implements Serializable {
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
             && (this.getNewtableId() == null ? other.getNewtableId() == null : this.getNewtableId().equals(other.getNewtableId()))
             && (this.getColumnname() == null ? other.getColumnname() == null : this.getColumnname().equals(other.getColumnname()))
-            && (this.getComment() == null ? other.getComment() == null : this.getComment().equals(other.getComment()))
-            && (this.getFlag() == null ? other.getFlag() == null : this.getFlag().equals(other.getFlag()));
+            && (this.getComment() == null ? other.getComment() == null : this.getComment().equals(other.getComment()));
     }
 
     @Override
@@ -70,7 +65,6 @@ public class NewColumn implements Serializable {
         result = prime * result + ((getNewtableId() == null) ? 0 : getNewtableId().hashCode());
         result = prime * result + ((getColumnname() == null) ? 0 : getColumnname().hashCode());
         result = prime * result + ((getComment() == null) ? 0 : getComment().hashCode());
-        result = prime * result + ((getFlag() == null) ? 0 : getFlag().hashCode());
         return result;
     }
 
@@ -84,7 +78,6 @@ public class NewColumn implements Serializable {
         sb.append(", newtableId=").append(newtableId);
         sb.append(", columnname=").append(columnname);
         sb.append(", comment=").append(comment);
-        sb.append(", flag=").append(flag);
         sb.append(", serialVersionUID=").append(serialVersionUID);
         sb.append("]");
         return sb.toString();

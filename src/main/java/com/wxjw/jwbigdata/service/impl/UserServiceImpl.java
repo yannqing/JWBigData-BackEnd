@@ -2,11 +2,13 @@ package com.wxjw.jwbigdata.service.impl;
 import java.util.Arrays;
 import java.util.Date;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.wxjw.jwbigdata.domain.Department;
 import com.wxjw.jwbigdata.domain.User;
 import com.wxjw.jwbigdata.mapper.DepartmentMapper;
 import com.wxjw.jwbigdata.mapper.UserMapper;
@@ -44,11 +46,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public List<UserVo> getUserList() {
-        List<User> users = userMapper.selectList(new QueryWrapper<User>()
-                .eq("role", 0));
+        List<User> users = userMapper.selectList(new QueryWrapper<User>());
         List<UserVo> userVos = new ArrayList<>();
         users.forEach(user -> {
-            UserVo vo = new UserVo(user, departmentMapper.selectById(user.getDepartmentId()).getName());
+            Department department = departmentMapper.selectById(user.getDepartmentId());
+            UserVo vo;
+            if(department != null){
+                vo = new UserVo(user, department.getName());
+            }
+            else{
+                vo = new UserVo(user, "");
+            }
             userVos.add(vo);
         });
         log.info("查询所有用户成功！");
@@ -56,7 +64,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public void addUser(String userName, String realName, Integer dept, String duties, String phone, HttpServletRequest request) throws JsonProcessingException {
+    public void addUser(String userName, String realName, String dept, String duties, String phone, HttpServletRequest request) throws JsonProcessingException {
         //验证userName与realName是否为有效
         if (StringUtils.isBlank(userName) || StringUtils.isBlank(realName)) {
             throw new IllegalArgumentException("账号和姓名不能为空");
@@ -66,13 +74,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String userInfo = JwtUtils.getUserInfoFromToken(token);
         User loginUser = objectMapper.readValue(userInfo, User.class);
 
+        Department department = departmentMapper.selectOne(new QueryWrapper<Department>().eq("name", dept));
+
         User user = new User();
         user.setUserAccount(userName);
         user.setUsername(realName);
         user.setPassword(passwordEncoder.encode("123456"));
-        user.setDepartmentId(dept);
+        user.setDepartmentId(department == null?0:department.getId());
         user.setPosition(duties);
         user.setCreatedUser(loginUser.getId());
+        user.setCreatedTime(new Date());
         user.setPhone(phone);
         user.setStatus(1);
         userMapper.insert(user);
@@ -80,7 +91,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public void switchUserStatus(String userId, Integer status) {
+    public void switchUserStatus(int userId, int status) {
         //校验参数是否有效
         User changedUser = userMapper.selectById(userId);
         if (changedUser == null) {
@@ -98,7 +109,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public void delUser(String[] userIds) {
+    public void switchDeptStatus(int deptId, int status) {
+        //校验参数是否有效
+        Department department = departmentMapper.selectById(deptId);
+        if (department == null) {
+            throw new IllegalArgumentException("部门不存在，请重试！");
+        }
+        if (status != 1 && status != 0) {
+            throw new IllegalArgumentException("状态错误！无法修改");
+        }
+        //修改状态
+        departmentMapper.update(new UpdateWrapper<Department>()
+                .eq("id", deptId)
+                .set("status", status)
+        );
+        log.info("修改{}部门的状态成功", department.getName());
+    }
+
+    @Override
+    public void delUser(int[] userIds) {
         Arrays.stream(userIds).forEach(userId ->{
             if (userMapper.selectById(userId) == null) {
                 throw new IllegalArgumentException("用户不存在，请重试！");
@@ -109,7 +138,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public void initPwd(String[] userIds) {
+    public void delDept(int[] deptIds) {
+        Arrays.stream(deptIds).forEach(deptId ->{
+            if (departmentMapper.selectById(deptId) == null) {
+                throw new IllegalArgumentException("部门不存在，请重试！");
+            }
+        });
+        Arrays.stream(deptIds).forEach(deptId -> departmentMapper.deleteById(deptId));
+        log.info("删除部门成功，删除的部门id：{}", (Object) deptIds);
+    }
+
+    @Override
+    public void updataDeptInfo(int deptId, String deptName) {
+        departmentMapper.update(new UpdateWrapper<Department>().eq("id", deptId).
+                set("name",deptName));
+        log.info("部门{}修改成功！",deptName);
+    }
+
+    @Override
+    public void initPwd(int[] userIds) {
         Arrays.stream(userIds).forEach(userId ->{
             if (userMapper.selectById(userId) == null) {
                 throw new IllegalArgumentException("用户不存在，请重试！");
@@ -124,7 +171,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public void switchUserAuth(String userId, Integer[] auths) {
+    public void switchUserAuth(Integer userId, Boolean[] auths) {
         //参数校验
         User user = userMapper.selectById(userId);
         if (user == null) {
@@ -133,20 +180,33 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (auths.length != 4) {
             throw new IllegalArgumentException("数组长度错误！");
         }
-        Arrays.stream(auths).forEach(auth -> {
-            if (auth != 0 && auth != 1) {
-                throw new IllegalArgumentException("权限参数错误！");
-            }
-        });
+
         //修改权限
         userMapper.update(new UpdateWrapper<User>()
                 .eq("id", userId)
-                .set("role", auths[0])
-                .set("portrait", auths[1])
-                .set("compare", auths[2])
-                .set("model", auths[3])
+                .set("role", auths[0]==false?0:1)
+                .set("portrait", auths[1]==false?0:1)
+                .set("compare", auths[2]==false?0:1)
+                .set("model", auths[3]==false?0:1)
         );
         log.info("修改用户{}权限成功", user.getUsername());
+    }
+
+    @Override
+    public void addDept(String deptName, HttpServletRequest request) throws JsonProcessingException{
+        //从token得到创建者的userId
+        String token = request.getHeader("token");
+        String userInfo = JwtUtils.getUserInfoFromToken(token);
+        User loginUser = objectMapper.readValue(userInfo, User.class);
+
+
+        Department department = new Department();
+        department.setName(deptName);
+        department.setCreatedUser(loginUser.getId().toString());
+        department.setIsDelete(0);
+        department.setStatus(0);
+        departmentMapper.insert(department);
+        log.info("用户{}新增了一个部门{}", loginUser.getUsername(), deptName);
     }
 }
 

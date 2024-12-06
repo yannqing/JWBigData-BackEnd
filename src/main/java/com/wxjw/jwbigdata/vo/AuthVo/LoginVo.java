@@ -14,12 +14,14 @@ public class LoginVo {
 
     private Integer userId;
     private String userName;
+    private String realName;
     private String token;
     private List<Integer> authList;
 
     public LoginVo(User user, String token, List<Integer> authList) {
         this.userId = user.getId();
-        this.userName = user.getUsername();
+        this.userName = user.getUserAccount();
+        this.realName = user.getUsername();
         this.token = token;
         this.authList = authList;
     }

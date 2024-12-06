@@ -36,34 +36,51 @@ public class PortraitController {
      */
     @PostMapping("/getPortraitList")
     public BaseResponse<JSONObject> getPortraitList(String type, String keyWord){
+        JSONArray result;
         if(type.equals("1"))
         {
             // 人物画像
             String regex = "(^\\d{15}$)|(^\\d{18}$)|(^\\d{17}(\\d|X|x)$)";
             Boolean isId = Pattern.matches(regex, keyWord);
             if(isId){
-                // 关键字是身份证号
-                JSONArray result = newTableService.humanListByid(keyWord);
+                try{
+                    // 关键字是身份证
+                    result = newTableService.humanListByid(keyWord);
+                }
+                catch (Exception ex){
+                    return ResultUtils.failure(Code.FAILURE, null, ex.getMessage());
+                }
+
             }
             else{
-                // 关键字是姓名
-                JSONArray result = newTableService.humanListByName(keyWord);
+                try{
+                    // 关键字是姓名
+                    result = newTableService.humanListByName(keyWord);
+                }
+                catch (Exception ex){
+                    return ResultUtils.failure(Code.FAILURE, null, ex.getMessage());
+                }
             }
         }
         else if(type.equals("2"))
         {
-            // 单位画像
-            JSONArray result = newTableService.companyList(keyWord);
+            try{
+                // 单位画像
+                result = newTableService.companyList(keyWord);
+            }
+            catch (Exception ex){
+                return ResultUtils.failure(Code.FAILURE, null, ex.getMessage());
+            }
         }
         else return ResultUtils.failure(Code.FAILURE, null, "画像类型错误！");
 //        JSONArray result = jwRuleService.getRuleResult(ruleId);
-        return ResultUtils.success(Code.SUCCESS, null, "获取人物画像结果");
+        return ResultUtils.success(Code.SUCCESS, result, "获取人物画像结果");
     }
 
     /**
      *
      * @param type:"1"是人物，“2”是单位
-     * @param keyInfo：String  //对于个人，是idNum；对于企业，可能name或idNum（企业可能没有）
+     * @param keyInfo：String  //对于个人，是id；对于企业，可能name或idNum（企业可能没有）
      * @return
      */
     @PostMapping("/getResultDetail")
@@ -71,13 +88,25 @@ public class PortraitController {
         JSONObject result = new JSONObject();
         if(type.equals("1"))
         {
-            // 关键字是身份证号
-            result = newTableService.humanIdPortrait(keyInfo);
+            try{
+                // 人物画像
+                // 关键字是id主键
+                result = newTableService.humanIdPortrait(keyInfo);
+            }
+            catch (Exception ex){
+                return ResultUtils.failure(Code.FAILURE, null, ex.getMessage());
+            }
+
         }
         else if(type.equals("2"))
         {
-            // 单位画像
-            result = newTableService.companyPortrait(keyInfo);
+            try{
+                // 单位画像
+                result = newTableService.companyPortrait(keyInfo);
+            }
+            catch (Exception ex){
+                return ResultUtils.failure(Code.FAILURE, null, ex.getMessage());
+            }
         }
         else
             return ResultUtils.failure(Code.FAILURE, result, "画像类型错误！");

@@ -3,6 +3,7 @@ package com.wxjw.jwbigdata.service;
 import com.wxjw.jwbigdata.domain.RelationOfNewtable;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+
 /**
 * @author Paul
 * @description 针对表【relationofnewtable】的数据库操作Service

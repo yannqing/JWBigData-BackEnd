@@ -1,5 +1,6 @@
 package com.wxjw.jwbigdata.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.wxjw.jwbigdata.domain.Department;
@@ -56,7 +57,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User>
     public List<DeptVo> getDeptList() {
         List<Department> departments = departmentMapper.selectList(null);
         List<DeptVo> depts = new ArrayList<>();
-        departments.forEach(dept -> depts.add(new DeptVo(dept.getId(), dept.getName())));
+        departments.forEach(dept -> depts.add(new DeptVo(dept.getId(), dept.getName(),dept.getStatus()==0?true:false)));
         log.info("查询全部部门信息");
         return depts;
     }
@@ -67,6 +68,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User>
         if (loginUser == null) {
             throw new IllegalArgumentException("用户不存在，请重试！");
         }
+//        Department department = departmentMapper.selectOne(new QueryWrapper<Department>().eq("name", dept));
         userMapper.update(new UpdateWrapper<User>()
                 .eq("id", userId)
                 .set("department_id", dept)

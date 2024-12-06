@@ -1,6 +1,7 @@
 package com.wxjw.jwbigdata.utils;
 
 
+import com.alibaba.fastjson.JSONArray;
 import com.wxjw.jwbigdata.common.Code;
 import com.wxjw.jwbigdata.vo.BaseResponse;
 
@@ -15,6 +16,10 @@ public class ResultUtils {
     }
 
     public static <T> BaseResponse<T> success(Integer code, T data, String msg){
+        return new BaseResponse<>(code, data, msg);
+    }
+
+    public static BaseResponse success(Integer code, JSONArray data, String msg){
         return new BaseResponse<>(code, data, msg);
     }
 

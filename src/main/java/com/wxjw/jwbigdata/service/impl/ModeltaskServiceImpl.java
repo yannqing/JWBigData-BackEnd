@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.wxjw.jwbigdata.domain.Modeltask;
 import com.wxjw.jwbigdata.service.ModeltaskService;
 import com.wxjw.jwbigdata.mapper.ModeltaskMapper;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,6 +16,11 @@ import org.springframework.stereotype.Service;
 public class ModeltaskServiceImpl extends ServiceImpl<ModeltaskMapper, Modeltask>
     implements ModeltaskService{
 
+    @Override
+//    @Scheduled(cron = "*/5 * * * * ?") // 每天凌晨1点执行
+    public void Task() {
+        System.out.println("定时任务执行了");
+    }
 }
 
 

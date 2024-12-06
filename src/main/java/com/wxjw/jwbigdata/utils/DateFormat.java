@@ -25,6 +25,13 @@ public class DateFormat {
         return currentDate.format(formatter);
     }
 
+    public static String getFileLongTime() {
+        SimpleDateFormat sdf = new SimpleDateFormat();
+        sdf.applyPattern("yyyyMMddHHmmss");
+        Date date = new Date();
+        return sdf.format(date);
+    }
+
     public static String convertToCronExpression(String dateTimeString) {
         try {
             // 解析时间字符串

@@ -3,15 +3,15 @@ package com.wxjw.jwbigdata.controller;
 import com.wxjw.jwbigdata.common.Code;
 import com.wxjw.jwbigdata.service.AuthService;
 import com.wxjw.jwbigdata.utils.ResultUtils;
+import com.wxjw.jwbigdata.vo.AuthVo.pwdInfo;
+import com.wxjw.jwbigdata.vo.AuthVo.pwdVo;
 import com.wxjw.jwbigdata.vo.BaseResponse;
 import com.wxjw.jwbigdata.vo.AuthVo.DeptVo;
 import com.wxjw.jwbigdata.vo.AuthVo.UserInfoVo;
+import com.wxjw.jwbigdata.vo.UserVo.UserVo;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
@@ -34,14 +34,16 @@ public class AuthController {
     }
 
     @PostMapping("/updateMyInfo")
-    public BaseResponse<Object> updateMyInfo(Integer userId, String dept, String duties, String phone){
-        userService.updateMyInfo(userId, dept, duties, phone);
+    public BaseResponse<Object> updateMyInfo(@RequestBody UserVo userInfo){
+        userService.updateMyInfo(userInfo.getUserId(), userInfo.getDept(), userInfo.getDuties(), userInfo.getPhone());
         return ResultUtils.success();
     }
 
     @PostMapping("/updateMyPwd")
-    public BaseResponse<Object> updateMyPwd(Integer userId, String oldPwd, String newPwd, HttpServletRequest request) {
-        userService.updateMyPwd(userId, oldPwd, newPwd, request);
+    public BaseResponse<Object> updateMyPwd(@RequestBody pwdInfo pwdInfo, HttpServletRequest request) {
+        pwdVo pwd = pwdInfo.getPwdInfo();
+        int userId = pwdInfo.getUserId();
+        userService.updateMyPwd(userId, pwd.getOldPwd(), pwd.getNewPwd(), request);
         return ResultUtils.success(Code.SUCCESS, null, "修改密码成功");
     }
 

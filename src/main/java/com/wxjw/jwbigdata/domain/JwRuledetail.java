@@ -22,16 +22,11 @@ public class JwRuledetail implements Serializable {
     private Integer ruledetailId;
 
     /**
-     * 左表id
+     * 左表字段id
      */
-    @TableField(value = "table_id")
-    private Integer tableId;
+    @TableField(value = "field_id")
+    private Integer fieldId;
 
-    /**
-     * 左字段名称
-     */
-    @TableField(value = "field_name")
-    private String fieldName;
 
     /**
      * 规则类型
@@ -52,16 +47,11 @@ public class JwRuledetail implements Serializable {
     private String matchValue;
 
     /**
-     * 右表id
+     * 右表字段id
      */
-    @TableField(value = "matchtable_id")
-    private Integer matchtableId;
+    @TableField(value = "matchfield_id")
+    private Integer matchfieldId;
 
-    /**
-     * 右字段名称
-     */
-    @TableField(value = "matchfield_name")
-    private String matchfieldName;
 
     /**
      * 备注
@@ -97,13 +87,11 @@ public class JwRuledetail implements Serializable {
         }
         JwRuledetail other = (JwRuledetail) that;
         return (this.getRuledetailId() == null ? other.getRuledetailId() == null : this.getRuledetailId().equals(other.getRuledetailId()))
-            && (this.getTableId() == null ? other.getTableId() == null : this.getTableId().equals(other.getTableId()))
-            && (this.getFieldName() == null ? other.getFieldName() == null : this.getFieldName().equals(other.getFieldName()))
+            && (this.getFieldId() == null ? other.getFieldId() == null : this.getFieldId().equals(other.getFieldId()))
             && (this.getMatchType() == null ? other.getMatchType() == null : this.getMatchType().equals(other.getMatchType()))
             && (this.getPattern() == null ? other.getPattern() == null : this.getPattern().equals(other.getPattern()))
             && (this.getMatchValue() == null ? other.getMatchValue() == null : this.getMatchValue().equals(other.getMatchValue()))
-            && (this.getMatchtableId() == null ? other.getMatchtableId() == null : this.getMatchtableId().equals(other.getMatchtableId()))
-            && (this.getMatchfieldName() == null ? other.getMatchfieldName() == null : this.getMatchfieldName().equals(other.getMatchfieldName()))
+            && (this.getMatchfieldId() == null ? other.getMatchfieldId() == null : this.getMatchfieldId().equals(other.getMatchfieldId()))
             && (this.getNote() == null ? other.getNote() == null : this.getNote().equals(other.getNote()))
             && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
             && (this.getRuleId() == null ? other.getRuleId() == null : this.getRuleId().equals(other.getRuleId()));
@@ -114,13 +102,11 @@ public class JwRuledetail implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((getRuledetailId() == null) ? 0 : getRuledetailId().hashCode());
-        result = prime * result + ((getTableId() == null) ? 0 : getTableId().hashCode());
-        result = prime * result + ((getFieldName() == null) ? 0 : getFieldName().hashCode());
+        result = prime * result + ((getFieldId() == null) ? 0 : getFieldId().hashCode());
         result = prime * result + ((getMatchType() == null) ? 0 : getMatchType().hashCode());
         result = prime * result + ((getPattern() == null) ? 0 : getPattern().hashCode());
         result = prime * result + ((getMatchValue() == null) ? 0 : getMatchValue().hashCode());
-        result = prime * result + ((getMatchtableId() == null) ? 0 : getMatchtableId().hashCode());
-        result = prime * result + ((getMatchfieldName() == null) ? 0 : getMatchfieldName().hashCode());
+        result = prime * result + ((getMatchfieldId() == null) ? 0 : getMatchfieldId().hashCode());
         result = prime * result + ((getNote() == null) ? 0 : getNote().hashCode());
         result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
         result = prime * result + ((getRuleId() == null) ? 0 : getRuleId().hashCode());
@@ -134,13 +120,11 @@ public class JwRuledetail implements Serializable {
         sb.append(" [");
         sb.append("Hash = ").append(hashCode());
         sb.append(", ruledetail_id=").append(ruledetailId);
-        sb.append(", table_id=").append(tableId);
-        sb.append(", field_name=").append(fieldName);
+        sb.append(", field_id=").append(fieldId);
         sb.append(", match_type=").append(matchType);
         sb.append(", pattern=").append(pattern);
         sb.append(", match_value=").append(matchValue);
-        sb.append(", matchtable_id=").append(matchtableId);
-        sb.append(", matchfield_name=").append(matchfieldName);
+        sb.append(", matchfield_id=").append(matchfieldId);
         sb.append(", note=").append(note);
         sb.append(", create_time=").append(createTime);
         sb.append(", rule_id=").append(ruleId);

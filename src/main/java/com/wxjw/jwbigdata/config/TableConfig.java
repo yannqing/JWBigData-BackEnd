@@ -21,6 +21,12 @@ public class TableConfig {
     @Value("${table.human.humanName}")
     private String humanName;
 
+    @Value("${table.human.humanPk}")
+    private String humanPk;
+
+    @Value("${table.human.humanFk}")
+    private String humanFk;
+
     @Value("${table.company.companyTable}")
     private String companyTable;
 
@@ -29,6 +35,12 @@ public class TableConfig {
 
     @Value("${table.company.companyName}")
     private String companyName;
+
+    @Value("${table.company.companyPk}")
+    private String companyPk;
+
+    @Value("${table.company.companyFk}")
+    private String companyFk;
 
     public String gethumanTable() {
         return humanTable;
@@ -42,6 +54,10 @@ public class TableConfig {
         return humanName;
     }
 
+    public String gethumanPk() {
+        return humanPk;
+    }
+
     public String getcompanyTable() {
         return companyTable;
     }
@@ -53,5 +69,13 @@ public class TableConfig {
     public String getcompanyName() {
         return companyName;
     }
+
+    public String getcompanyPk() {
+        return companyPk;
+    }
+
+    public String getHumanFk() { return humanFk; }
+
+    public String getCompanyFk() {return companyFk;}
 
 }

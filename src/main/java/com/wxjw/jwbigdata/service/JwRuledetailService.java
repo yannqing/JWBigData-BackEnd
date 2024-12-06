@@ -15,7 +15,7 @@ import java.util.List;
 public interface JwRuledetailService extends IService<JwRuledetail> {
     List<RuleDetailVo> getSubrules(String ruleId);
 
-    void addSubrule(String ruleId, String note, String tableId, String fieldName, String matchType, String pattern, String matchValue, String matchTableId, String matchFieldName);
+    void addSubrule(String ruleId, String note, String tableId, String fieldId, String matchType, String pattern, String matchValue, String matchTableId, String matchFieldId);
 
     void delSubrule(String subruleId);
 }

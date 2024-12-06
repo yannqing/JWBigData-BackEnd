@@ -5,7 +5,7 @@
 <mapper namespace="com.wxjw.jwbigdata.mapper.OperationMapper">
 
     <insert id="dynamicInsert">
-        INSERT INTO ${tableName}
+        INSERT INTO `${tableName}`
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <foreach collection="columns" item="column" separator=",">
                 `${column}`

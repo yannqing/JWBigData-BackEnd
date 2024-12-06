@@ -10,4 +10,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface ModeltaskService extends IService<Modeltask> {
 
+    void Task();
+
 }

@@ -10,29 +10,46 @@ spring:
       datasource:
         jw:
           driver-class-name: com.mysql.cj.jdbc.Driver
-          url: jdbc:mysql://localhost:3306/jw
+          url: jdbc:mysql://172.168.1.208:3306/jw
+#          url: jdbc:mysql://localhost:3306/jw
           username: root
-          password: 123456
+          password: Bigdata@3124
+#          password: 123456
         uploaddb:
           driver-class-name: com.mysql.cj.jdbc.Driver
-          url: jdbc:mysql://localhost:3306/uploaddb
+          url: jdbc:mysql://172.168.1.208:3306/uploaddb
+#          url: jdbc:mysql://localhost:3306/uploaddb
           username: root
-          password: 123456
+          password: Bigdata@3124
+#          password: 123456
         cleandb:
           driver-class-name: com.mysql.cj.jdbc.Driver
-          url: jdbc:mysql://localhost:3306/cleandb
+          url: jdbc:mysql://172.168.1.208:3306/cleandb
+#          url: jdbc:mysql://localhost:3306/cleandb
           username: root
-          password: 123456
+          password: Bigdata@3124
+#          password: 123456
+        newdb:
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          url: jdbc:mysql://172.168.1.208:3306/newdb
+#          url: jdbc:mysql://localhost:3306/newdb
+          username: root
+          password: Bigdata@3124
+#          password: 123456
         sparadb:
           driver-class-name: com.mysql.cj.jdbc.Driver
-          url: jdbc:mysql://localhost:3306/sparadb
+          url: jdbc:mysql://172.168.1.208:3306/sparadb
+#          url: jdbc:mysql://localhost:3306/sparadb
           username: root
-          password: 123456
+          password: Bigdata@3124
+#          password: 123456
         modelresultdb:
           driver-class-name: com.mysql.cj.jdbc.Driver
-          url: jdbc:mysql://localhost:3306/modelresultdb
+          url: jdbc:mysql://172.168.1.208:3306/modelresultdb
+#          url: jdbc:mysql://localhost:3306/modelresultdb
           username: root
-          password: 123456
+          password: Bigdata@3124
+#          password: 123456
     data:
       redis:
         host: 127.0.0.1
@@ -58,11 +75,17 @@ spring:
         logic-not-delete-value: 0
 table:
   human:
-    humanTable: baset
-    humanId: PersonId
+    humanTable: pbasicinfo
+    humanId: idcard
     humanName: name
+    humanPk: Id
+    humanFk: pbinfo_id
   company:
     companyTable: std_mzj_shzzb
     companyId: tyshxydm
     companyName: shzzmc
-
+    companyPk: Id
+    companyFk: std_mzj_shzzb_id
+logging:
+  level:
+    com.baomidou.mybatisplus.core.mapper: DEBUG
