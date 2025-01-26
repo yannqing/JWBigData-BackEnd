@@ -4,6 +4,10 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.wxjw.jwbigdata.domain.NewTable;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.wxjw.jwbigdata.vo.TableVo.AuthTable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * @author Paul
@@ -12,15 +16,21 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface NewTableService extends IService<NewTable> {
 
-    JSONArray getFieldsList();
+    JSONArray getFieldsList(Integer userId);
 
-    JSONObject humanIdPortrait(String keyWord);
+    JSONObject humanIdPortrait(String keyWord,Integer userId);
 
-    JSONObject companyPortrait(String keyWord);
+    JSONObject companyPortrait(String keyWord,Integer userId);
 
     JSONArray humanListByid(String keyWord);
 
     JSONArray humanListByName(String keyWord);
 
     JSONArray companyList(String keyWord);
+
+    JSONObject searchListByKeyWord(List<Integer> tables,String keyWord);
+
+    ArrayList<AuthTable> getUserAuthTables(Integer userId);
+
+    ArrayList<AuthTable> getAllTables();
 }

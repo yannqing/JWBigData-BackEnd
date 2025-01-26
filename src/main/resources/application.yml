@@ -14,42 +14,42 @@ spring:
 #          url: jdbc:mysql://localhost:3306/jw
           username: root
           password: Bigdata@3124
-#          password: 123456
+#          password: 123
         uploaddb:
           driver-class-name: com.mysql.cj.jdbc.Driver
           url: jdbc:mysql://172.168.1.208:3306/uploaddb
 #          url: jdbc:mysql://localhost:3306/uploaddb
           username: root
           password: Bigdata@3124
-#          password: 123456
+#          password: 123
         cleandb:
           driver-class-name: com.mysql.cj.jdbc.Driver
           url: jdbc:mysql://172.168.1.208:3306/cleandb
 #          url: jdbc:mysql://localhost:3306/cleandb
           username: root
           password: Bigdata@3124
-#          password: 123456
+#          password: 123
         newdb:
           driver-class-name: com.mysql.cj.jdbc.Driver
           url: jdbc:mysql://172.168.1.208:3306/newdb
 #          url: jdbc:mysql://localhost:3306/newdb
           username: root
           password: Bigdata@3124
-#          password: 123456
+#          password: 123
         sparadb:
           driver-class-name: com.mysql.cj.jdbc.Driver
           url: jdbc:mysql://172.168.1.208:3306/sparadb
 #          url: jdbc:mysql://localhost:3306/sparadb
           username: root
           password: Bigdata@3124
-#          password: 123456
+#          password: 123
         modelresultdb:
           driver-class-name: com.mysql.cj.jdbc.Driver
           url: jdbc:mysql://172.168.1.208:3306/modelresultdb
 #          url: jdbc:mysql://localhost:3306/modelresultdb
           username: root
           password: Bigdata@3124
-#          password: 123456
+#          password: 123
     data:
       redis:
         host: 127.0.0.1
@@ -73,9 +73,15 @@ spring:
         logic-delete-field: isDelete
         logic-delete-value: 1
         logic-not-delete-value: 0
+        id-type: auto
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 1024MB
 table:
   human:
-    humanTable: pbasicinfo
+    humanTable: pindex
     humanId: idcard
     humanName: name
     humanPk: Id

@@ -38,7 +38,7 @@
         `${tableName}`
         where
         <foreach collection="columns" item="key" separator=" or ">
-            `${key}` = #{keyWord}
+            `${key}` LIKE concat('%',#{keyWord},'%')
         </foreach>
     </select>
 

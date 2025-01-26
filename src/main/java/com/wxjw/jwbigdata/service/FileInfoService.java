@@ -2,11 +2,13 @@ package com.wxjw.jwbigdata.service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wxjw.jwbigdata.domain.FileInfo;
 import com.wxjw.jwbigdata.vo.FileVo.OnlineFileVo;
 import com.wxjw.jwbigdata.vo.FileVo.SaveFileIdVo;
 import com.wxjw.jwbigdata.vo.FileVo.TreeVo;
 import com.wxjw.jwbigdata.vo.FileVo.fileVo;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,11 +24,11 @@ import java.util.Map;
 */
 public interface FileInfoService extends IService<FileInfo> {
 
-    void uploadFile(MultipartFile file, String fileName, String fileType, Integer userId) throws IOException;
+    void uploadFile(MultipartFile file, String fileName,Integer userId) throws IOException;
 
-    void delFile(String[] fileId);
+    void delFile(String[] fileId, HttpServletRequest request) throws JsonProcessingException;
 
-    void switchFileStatus(Integer status, Integer fileId);
+    void switchFileStatus(Integer status, Integer fileId, HttpServletRequest request) throws JsonProcessingException;
 
     List<TreeVo> getTree(Integer userId);
 
@@ -34,7 +36,7 @@ public interface FileInfoService extends IService<FileInfo> {
 
     void exportFile(Integer userId, List<Integer> fileIdArray, HttpServletResponse response) throws IOException;
 
-    List<OnlineFileVo> getOnlineFiles(Integer userId);
+    List<OnlineFileVo> getOnlineFiles(HttpServletRequest request) throws JsonProcessingException;
 
     List<List<String>> queryFile(Integer userId, Integer fileId, String[] columnArray, String keyWord);
 

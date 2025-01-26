@@ -15,6 +15,7 @@
             <result property="portrait" column="portrait" jdbcType="TINYINT"/>
             <result property="compare" column="compare" jdbcType="TINYINT"/>
             <result property="model" column="model" jdbcType="TINYINT"/>
+            <result property="search" column="search" jdbcType="TINYINT"/>
             <result property="createdUser" column="created_user" jdbcType="INTEGER"/>
             <result property="createdTime" column="created_time" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="is_delete" jdbcType="TINYINT"/>
@@ -23,7 +24,7 @@
     <sql id="Base_Column_List">
         id,user_account,password,
         username,department_id,position,
-        role,portrait,compare,
+        role,portrait,compare,search,
         model,created_user,created_time,
         is_delete
     </sql>

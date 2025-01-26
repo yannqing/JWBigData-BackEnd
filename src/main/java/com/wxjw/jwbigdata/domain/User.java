@@ -16,6 +16,14 @@ import java.util.Date;
 @Data
 @TableName(value ="user")
 public class User implements Serializable {
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
     /**
      * 用户id
      */
@@ -75,6 +83,12 @@ public class User implements Serializable {
      */
     @TableField(value = "model")
     private Integer model;
+
+    /**
+     * 智能检索系统：0无权限，1有权限（默认无权限）
+     */
+    @TableField(value = "search")
+    private Integer search;
 
     /**
      * 创建者id

@@ -5,7 +5,9 @@ import com.wxjw.jwbigdata.security.filter.JwtAuthenticationTokenFilter;
 import com.wxjw.jwbigdata.security.handler.MyLoginFailureHandler;
 import com.wxjw.jwbigdata.security.handler.MyLoginSuccessHandler;
 import com.wxjw.jwbigdata.security.handler.MyLogoutSuccessHandler;
+import com.wxjw.jwbigdata.service.OperlogService;
 import com.wxjw.jwbigdata.utils.RedisCache;
+import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +27,9 @@ public class SecurityConfig {
 
     @Autowired
     RedisCache redisCache;
+
+    @Resource
+    private OperlogService operlogService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -46,7 +51,7 @@ public class SecurityConfig {
         //form表单登录
         http.formLogin((login)->login.
                 loginProcessingUrl("/login")
-                .successHandler(new MyLoginSuccessHandler(redisCache))
+                .successHandler(new MyLoginSuccessHandler(redisCache,operlogService))
                 .failureHandler(new MyLoginFailureHandler())
         );
         //post请求登录
@@ -54,7 +59,7 @@ public class SecurityConfig {
         //设置退出logout过滤器
         http.logout((logout)->logout
                 .logoutUrl("/logout")
-                .logoutSuccessHandler(new MyLogoutSuccessHandler(redisCache))
+                .logoutSuccessHandler(new MyLogoutSuccessHandler(redisCache,operlogService))
         );
 
         //关闭跨域拦截--适用于前后端分离，另创建跨域拦截的类

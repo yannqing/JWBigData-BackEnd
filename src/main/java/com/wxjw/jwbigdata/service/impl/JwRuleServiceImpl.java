@@ -7,13 +7,17 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wxjw.jwbigdata.common.OperType;
 import com.wxjw.jwbigdata.config.TableConfig;
 import com.wxjw.jwbigdata.domain.*;
 import com.wxjw.jwbigdata.mapper.*;
 import com.wxjw.jwbigdata.service.JwRuleService;
+import com.wxjw.jwbigdata.utils.JwtUtils;
 import com.wxjw.jwbigdata.utils.StringUtils;
 import com.wxjw.jwbigdata.vo.RuleVo.RuleVo;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -59,6 +63,12 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
     @Resource
     private modelResultdbQueryService modelResultdbQueryService;
 
+    @Resource
+    private OperlogMapper operlogMapper;
+
+    @Resource
+    private ObjectMapper objectMapper;
+
     @Override
     public void addRule(Integer userId, String ruleName, String ruleComment, String ruleSteps) {
         User user = userMapper.selectOne(new QueryWrapper<User>().eq("id", userId));
@@ -75,22 +85,46 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
         else rule.setStatus(0); //普通用户：私有模型
         rule.setIsOn(0);
         jwRuleMapper.insert(rule);
+        Operlog operlog = new Operlog();
+        operlog.setUserId(userId);
+        operlog.setOperType(OperType.addRule);
+        operlog.setOperData(ruleName);
+        operlog.setOperTime(new Date());
+        operlogMapper.insert(operlog);
         log.info("用户{}新增了一个模型{}", user.getUsername(), ruleName);
     }
 
     @Override
-    public void delRule(String[] ruleIds) {
+    public void delRule(String[] ruleIds, HttpServletRequest request) throws JsonProcessingException {
+        //从token得到创建者的userId
+        String token = request.getHeader("token");
+        String userInfo = JwtUtils.getUserInfoFromToken(token);
+        User loginUser = objectMapper.readValue(userInfo, User.class);
+
         Arrays.stream(ruleIds).forEach(ruleId -> {
             if (jwRuleMapper.selectById(ruleId) == null) {
                 throw new IllegalArgumentException("模型不存在，请重试！");
             }
         });
-        Arrays.stream(ruleIds).forEach(ruleId -> jwRuleMapper.deleteById(ruleId));
+        Arrays.stream(ruleIds).forEach(ruleId -> {
+            JwRule jwRule = jwRuleMapper.selectById(ruleId);
+            Operlog operlog = new Operlog();
+            operlog.setUserId(loginUser.getId());
+            operlog.setOperType(OperType.delRule);
+            operlog.setOperData(jwRule == null?ruleId:jwRule.getRuleName());
+            operlog.setOperTime(new Date());
+            operlogMapper.insert(operlog);
+            jwRuleMapper.deleteById(ruleId);
+        });
         log.info("删除模型成功，删除的模型id：{}", (Object) ruleIds);
     }
 
     @Override
-    public void switchRuleStatus(Integer ruleId, Integer status) {
+    public void switchRuleStatus(Integer ruleId, Integer status,HttpServletRequest request) throws JsonProcessingException{
+        //从token得到创建者的userId
+        String token = request.getHeader("token");
+        String userInfo = JwtUtils.getUserInfoFromToken(token);
+        User loginUser = objectMapper.readValue(userInfo, User.class);
         //校验参数是否有效
         JwRule rule = jwRuleMapper.selectById(ruleId);
         if (rule == null) {
@@ -104,6 +138,12 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 .eq("rule_id", ruleId)
                 .set("status", status)
         );
+        Operlog operlog = new Operlog();
+        operlog.setUserId(loginUser.getId());
+        operlog.setOperType(OperType.switchRuleStatus);
+        operlog.setOperData(rule.getRuleName()+"-"+(status==0?"私有":"公有"));
+        operlog.setOperTime(new Date());
+        operlogMapper.insert(operlog);
         log.info("修改{}模型的状态成功", rule.getRuleName());
     }
 
@@ -120,7 +160,12 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
     }
 
     @Override
-    public void editRule(Integer ruleId, String ruleName, String ruleComment, String ruleSteps) {
+    public void editRule(Integer ruleId, String ruleName, String ruleComment, String ruleSteps, HttpServletRequest request) throws JsonProcessingException{
+        //从token得到创建者的userId
+        String token = request.getHeader("token");
+        String userInfo = JwtUtils.getUserInfoFromToken(token);
+        User loginUser = objectMapper.readValue(userInfo, User.class);
+
         JwRule rule = jwRuleMapper.selectById(ruleId);
         if (rule == null) {
             throw new IllegalArgumentException("模型不存在，请重试！");
@@ -130,6 +175,12 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 .set("rule_name", ruleName)
                 .set("description", ruleComment)
                 .set("note", ruleSteps));
+        Operlog operlog = new Operlog();
+        operlog.setUserId(loginUser.getId());
+        operlog.setOperType(OperType.editRule);
+        operlog.setOperData(rule.getRuleName());
+        operlog.setOperTime(new Date());
+        operlogMapper.insert(operlog);
         log.info("模型{}更新信息", rule.getRuleName());
     }
 
@@ -161,14 +212,19 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
         }
         JwRule rule = jwRuleMapper.selectById(Integer.parseInt(ruleId));
         if (rule == null) {
-            throw new IllegalArgumentException("无该模型");
+            throw new IllegalArgumentException("该模型不存在！");
         }
         log.info("模型{}获取信息成功", rule.getRuleName());
         return new RuleVo(rule, userMapper.selectById(rule.getCreateBy()));
     }
 
     @Override
-    public void switchRuleOn(String ruleId, Integer isOn) {
+    public void switchRuleOn(String ruleId, Integer isOn, HttpServletRequest request) throws JsonProcessingException{
+        //从token得到创建者的userId
+        String token = request.getHeader("token");
+        String userInfo = JwtUtils.getUserInfoFromToken(token);
+        User loginUser = objectMapper.readValue(userInfo, User.class);
+
         //校验参数是否有效
         JwRule rule = jwRuleMapper.selectById(ruleId);
         if (rule == null) {
@@ -186,6 +242,12 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                     .set("is_on", isOn)
             );
             modeltaskMapper.delete(new QueryWrapper<Modeltask>().eq("modelId", ruleId));
+            Operlog operlog = new Operlog();
+            operlog.setUserId(loginUser.getId());
+            operlog.setOperType(OperType.switchRuleOn);
+            operlog.setOperData(rule.getRuleName()+"-暂停");
+            operlog.setOperTime(new Date());
+            operlogMapper.insert(operlog);
         } else {
             // 需生成sql_statement
             List<JwRuledetail> ruledetails = jwRuledetailMapper.selectList(new QueryWrapper<JwRuledetail>().eq("rule_id", ruleId));
@@ -230,6 +292,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 Integer fieldId = ruleDetail.getFieldId();
                 NewColumn field1 = jwFieldMapper.selectById(fieldId);
                 NewTable table1 = jwTableMapper.selectById(field1.getNewtableId());
+                if(field1 == null || table1 == null)
+                    continue;
                 String tableName1 = table1.getTablename();
                 String tableComment1 = table1.getComment();
                 String fieldName1 = field1.getColumnname();
@@ -238,6 +302,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 Integer matchFieldId = ruleDetail.getMatchfieldId();
                 NewColumn field2 = jwFieldMapper.selectById(matchFieldId);
                 NewTable table2 = jwTableMapper.selectById(field2.getNewtableId());
+                if(field2 == null || table2 == null)
+                    continue;
                 String tableName2 = table2.getTablename();
                 String tableComment2 = table2.getComment();
                 String fieldName2 = field2.getColumnname();
@@ -261,6 +327,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 Integer fieldId = ruleDetail1.getFieldId();
                 NewColumn field = jwFieldMapper.selectById(fieldId);
                 NewTable table = jwTableMapper.selectById(field.getNewtableId());
+                if(field == null || table == null)
+                    continue;
                 String tableName = table.getTablename();
                 String tableComment = table.getComment();
                 tableset.add(tableName);
@@ -286,6 +354,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 Integer fieldId = ruleDetail5.getFieldId();
                 NewColumn field1 = jwFieldMapper.selectById(fieldId);
                 NewTable table1 = jwTableMapper.selectById(field1.getNewtableId());
+                if(field1 == null || table1 == null)
+                    continue;
                 String tableName1 = table1.getTablename();
                 String tableComment1 = table1.getComment();
                 String fieldName1 = field1.getColumnname();
@@ -294,6 +364,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 Integer matchFieldId = ruleDetail5.getMatchfieldId();
                 NewColumn field2 = jwFieldMapper.selectById(matchFieldId);
                 NewTable table2 = jwTableMapper.selectById(field2.getNewtableId());
+                if(field2 == null || table2 == null)
+                    continue;
                 String tableName2 = table2.getTablename();
                 String tableComment2 = table2.getComment();
                 String fieldName2 = field2.getColumnname();
@@ -331,6 +403,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 Integer fieldId = ruleDetail6.getFieldId();
                 NewColumn field = jwFieldMapper.selectById(fieldId);
                 NewTable table = jwTableMapper.selectById(field.getNewtableId());
+                if(field == null || table == null)
+                    continue;
                 String tableName = table.getTablename();
                 String tableComment = table.getComment();
                 String fieldName = field.getColumnname();
@@ -349,6 +423,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 Integer fieldId = ruleDetail3.getFieldId();
                 NewColumn field = jwFieldMapper.selectById(fieldId);
                 NewTable table = jwTableMapper.selectById(field.getNewtableId());
+                if(field == null || table == null)
+                    continue;
                 String tableName = table.getTablename();
                 String tableComment = table.getComment();
                 String marchvalue = ruleDetail3.getMatchValue();
@@ -375,6 +451,8 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 Integer fieldId = ruleDetail4.getFieldId();
                 NewColumn field = jwFieldMapper.selectById(fieldId);
                 NewTable table = jwTableMapper.selectById(field.getNewtableId());
+                if(field == null || table == null)
+                    continue;
                 String tableName = table.getTablename();
                 String tableComment = table.getComment();
                 String marchvalue = ruleDetail4.getMatchValue();
@@ -401,22 +479,26 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                     if (!tablename.equals(tableConfig.gethumanTable()) && !tablename.equals(tableConfig.getcompanyTable())) {
                         NewTable table = jwTableMapper.selectOne(new QueryWrapper<NewTable>().eq("tablename", tablename));
                         Integer tableId = table.getId();
-                        RelationOfNewtable relationOfNewtable = relationOfNewtableMapper.selectOne(new QueryWrapper<RelationOfNewtable>().eq("newtable_id", tableId));
-                        String label = relationOfNewtable.getLabel();
+                        List<RelationOfNewtable> relationOfNewtables = relationOfNewtableMapper.selectList(new QueryWrapper<RelationOfNewtable>().eq("newtable_id", tableId));
+                        List<String> labels = new ArrayList<>();
+                        for (RelationOfNewtable relationOfNewtable : relationOfNewtables) {
+                            labels.add(relationOfNewtable.getLabel());
+                        }
                         // 当前表为人物相关
-                        if (label.equals("human")) {
+                        if (labels.contains("human")) {
                             newtableset.add(tableConfig.gethumanTable());
                             String wSql = " AND " + tableConfig.gethumanTable() + '.' + tableConfig.gethumanPk() + " = " + tablename + '.' + tableConfig.getHumanFk();
                             if (!whereSql.contains(wSql)) {
                                 whereSql = wSql + whereSql;
                             }
-                        } else if (label.equals("unit")) {
-                            newtableset.add(tableConfig.getcompanyTable());
-                            String wSql = " AND " + tableConfig.getcompanyTable() + '.' + tableConfig.getcompanyPk() + " = " + tablename + '.' + tableConfig.getCompanyFk();
-                            if (!whereSql.contains(wSql)) {
-                                whereSql = wSql + whereSql;
-                            }
                         }
+//                        else if (labels.contains("unit")) {
+//                            newtableset.add(tableConfig.getcompanyTable());
+//                            String wSql = " AND " + tableConfig.getcompanyTable() + '.' + tableConfig.getcompanyPk() + " = " + tablename + '.' + tableConfig.getCompanyFk();
+//                            if (!whereSql.contains(wSql)) {
+//                                whereSql = wSql + whereSql;
+//                            }
+//                        }
                     }
                 }
                 tableset = newtableset;
@@ -477,14 +559,23 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
             } else {
                 throw new IllegalArgumentException("规则条目存在问题，请联系管理员！");
             }
-
+            Operlog operlog = new Operlog();
+            operlog.setUserId(loginUser.getId());
+            operlog.setOperType(OperType.switchRuleOn);
+            operlog.setOperData(rule.getRuleName()+"-启用");
+            operlog.setOperTime(new Date());
         }
 
         log.info("修改{}模型的启用状态成功", rule.getRuleName());
     }
 
     @Override
-    public JSONObject getRuleResult(String ruleId) {
+    public JSONObject getRuleResult(String ruleId, HttpServletRequest request) throws JsonProcessingException{
+        //从token得到创建者的userId
+        String token = request.getHeader("token");
+        String userInfo = JwtUtils.getUserInfoFromToken(token);
+        User loginUser = objectMapper.readValue(userInfo, User.class);
+
         //校验参数是否有效
         JwRule rule = jwRuleMapper.selectById(ruleId);
         if (rule == null) {
@@ -514,6 +605,13 @@ public class JwRuleServiceImpl extends ServiceImpl<JwRuleMapper, JwRule>
                 result.put("personInfo", new JSONArray());
                 result.put("companyInfo", details);
             } else throw new IllegalArgumentException("模型类型异常，请联系管理员！");
+
+            Operlog operlog = new Operlog();
+            operlog.setUserId(loginUser.getId());
+            operlog.setOperType(OperType.getRuleResult);
+            operlog.setOperData(rule.getRuleName());
+            operlog.setOperTime(new Date());
+            operlogMapper.insert(operlog);
             return result;
         } else {
             throw new IllegalArgumentException("模型结果表不存在，请联系管理员！");

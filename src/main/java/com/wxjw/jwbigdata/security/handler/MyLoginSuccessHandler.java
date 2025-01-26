@@ -3,12 +3,17 @@ package com.wxjw.jwbigdata.security.handler;
 import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wxjw.jwbigdata.common.Code;
+import com.wxjw.jwbigdata.common.OperType;
+import com.wxjw.jwbigdata.domain.Operlog;
 import com.wxjw.jwbigdata.domain.User;
+import com.wxjw.jwbigdata.mapper.OperlogMapper;
+import com.wxjw.jwbigdata.service.OperlogService;
 import com.wxjw.jwbigdata.utils.JwtUtils;
 import com.wxjw.jwbigdata.utils.RedisCache;
 import com.wxjw.jwbigdata.utils.ResultUtils;
 import com.wxjw.jwbigdata.vo.AuthVo.LoginVo;
 import com.wxjw.jwbigdata.vo.SecurityUser;
+import jakarta.annotation.Resource;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +23,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -27,9 +33,12 @@ public class MyLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private RedisCache redisCache;
 
+    private OperlogService operlogService;
 
-    public MyLoginSuccessHandler(RedisCache redisCache) {
+
+    public MyLoginSuccessHandler(RedisCache redisCache,OperlogService operlogService) {
         this.redisCache = redisCache;
+        this.operlogService = operlogService;
     }
 
     /**
@@ -52,6 +61,7 @@ public class MyLoginSuccessHandler implements AuthenticationSuccessHandler {
         List<Integer> authList = new ArrayList<>();
         authList.add(user.getRole());
         authList.add(user.getPortrait());
+        authList.add(user.getSearch());
         authList.add(user.getCompare());
         authList.add(user.getModel());
        //生成token
@@ -62,6 +72,12 @@ public class MyLoginSuccessHandler implements AuthenticationSuccessHandler {
         LoginVo userInfoVo = new LoginVo(user, token, authList);
 
         response.getWriter().write(JSONUtil.toJsonStr(ResultUtils.success(Code.LOGIN_SUCCESS, userInfoVo,"登录成功")));
+        Operlog operlog = new Operlog();
+        operlog.setUserId(user.getId());
+        operlog.setOperType(OperType.loginIn);
+        operlog.setOperData("登录成功");
+        operlog.setOperTime(new Date());
+        operlogService.InsertLog(operlog);
         log.info("登录成功！");
     }
 }

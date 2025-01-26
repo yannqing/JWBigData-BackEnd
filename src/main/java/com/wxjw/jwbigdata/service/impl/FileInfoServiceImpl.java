@@ -10,15 +10,19 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.wxjw.jwbigdata.domain.FileInfo;
-import com.wxjw.jwbigdata.domain.NewColumn;
-import com.wxjw.jwbigdata.domain.NewTable;
-import com.wxjw.jwbigdata.domain.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.IgnoredPropertyException;
+import com.wxjw.jwbigdata.common.OperType;
+import com.wxjw.jwbigdata.config.TableConfig;
+import com.wxjw.jwbigdata.domain.*;
 import com.wxjw.jwbigdata.listener.excel.ExcelListener;
 import com.wxjw.jwbigdata.mapper.*;
 import com.wxjw.jwbigdata.service.FileInfoService;
+import com.wxjw.jwbigdata.utils.JwtUtils;
 import com.wxjw.jwbigdata.vo.FileVo.*;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.MutablePropertyValues;
@@ -54,12 +58,24 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     private NewTableMapper jwTableMapper;
     @Resource
     private NewColumnMapper newColumnMapper;
-    @Autowired
+    @Resource
+    private RelationOfNewtableMapper relationOfNewtableMapper;
+    @Resource
     private OperationMapper operationMapper;
     @Resource
     private OperationServiceImpl operationService;
     @Resource
     private NewdbQueryService newdbQueryService;
+    @Resource
+    private ObjectMapper objectMapper;
+    @Resource
+    private OperlogMapper operlogMapper;
+    @Resource
+    private UserTableMapper userTableMapper;
+    @Resource
+    private DepartmentTableMapper departmentTableMapper;
+    @Autowired
+    private TableConfig tableConfig;
 //    @Autowired
 //    private DataSource dataSource;
 
@@ -68,13 +84,12 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
      *
      * @param file     文件
      * @param fileName 文件名
-     * @param fileType 文件类型
      * @param userId   用户id
      * @throws IOException
      */
     @Override
     @Transactional
-    public void uploadFile(MultipartFile file, String fileName, String fileType, Integer userId) throws IOException, BadSqlGrammarException {
+    public void uploadFile(MultipartFile file, String fileName, Integer userId) throws IOException, BadSqlGrammarException {
         //参数校验
         User loginUser = userMapper.selectById(userId);
         if (loginUser == null) {
@@ -84,15 +99,20 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             throw new IllegalArgumentException("上传文件为空！");
         }
         //读取excel
-        EasyExcel.read(file.getInputStream(), new ExcelListener(loginUser.getRole(), fileName, userId, fileInfoMapper, operationMapper)).doReadAll();
+        EasyExcel.read(file.getInputStream(), new ExcelListener(loginUser.getRole(), fileName, userId, fileInfoMapper, operationMapper,operlogMapper)).doReadAll();
     }
 
     @Override
-    public void delFile(String[] fileId) {
+    public void delFile(String[] fileId, HttpServletRequest request) throws JsonProcessingException {
         //参数校验
         if (fileId.length == 0) {
             throw new IllegalArgumentException("参数为空！");
         }
+        //从token得到创建者的userId
+        String token = request.getHeader("token");
+        String userInfo = JwtUtils.getUserInfoFromToken(token);
+        User loginUser = objectMapper.readValue(userInfo, User.class);
+
         //遍历所有的文件id
         Arrays.stream(fileId).forEach(id -> {
             //查找是否存在子文件
@@ -107,23 +127,44 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
                 }
             }
             FileInfo file = fileInfoMapper.selectById(id);
+            if(file == null)
+                return;
             Integer parentId = file.getParentId();
+            String name = file.getFileName();
             //删除文件
-            FileInfo fileInfo = fileInfoMapper.selectById(id);
             fileInfoMapper.deleteById(id);
-            operationMapper.dropTable(fileInfo.getTableName());
+            operationMapper.dropTable(file.getTableName());
             //判断是否要删除父文件夹
             List<FileInfo> brotherFiles = fileInfoMapper.selectList(new QueryWrapper<FileInfo>().eq("parent_id", parentId));
             if (brotherFiles.isEmpty() && parentId > 3) {
                 fileInfoMapper.deleteById(parentId);
             }
+            Operlog operlog = new Operlog();
+            operlog.setUserId(loginUser.getId());
+            operlog.setOperType(OperType.delFile);
+            operlog.setOperData(name);
+            operlog.setOperTime(new Date());
+            operlogMapper.insert(operlog);
         });
         log.info("删除库文件");
     }
 
     @Override
-    public void switchFileStatus(Integer status, Integer fileId) {
+    public void switchFileStatus(Integer status, Integer fileId, HttpServletRequest request) throws JsonProcessingException {
         fileInfoMapper.update(new UpdateWrapper<FileInfo>().eq("id", fileId).set("status", status));
+        //从token得到创建者的userId
+        String token = request.getHeader("token");
+        String userInfo = JwtUtils.getUserInfoFromToken(token);
+        User loginUser = objectMapper.readValue(userInfo, User.class);
+        FileInfo fileInfo = fileInfoMapper.selectById(fileId);
+        if(fileInfo == null)
+            throw new IllegalArgumentException("文件不存在！");
+        Operlog operlog = new Operlog();
+        operlog.setUserId(loginUser.getId());
+        operlog.setOperType(status == 0?OperType.switchFileOff:OperType.switchFileOn);
+        operlog.setOperData(fileInfo.getFileName());
+        operlog.setOperTime(new Date());
+        operlogMapper.insert(operlog);
         log.info("更改文件{}显示状态{}", fileId, status);
     }
 
@@ -210,13 +251,13 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     }
 
     @Override
-    public void uploadFileOnline(Integer userId, List<Integer> fileIdArray) {
+    public void uploadFileOnline(Integer userId, List<Integer> fileIdArray){
         if (userId == null || fileIdArray == null) {
             throw new IllegalArgumentException("参数为空！");
         }
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new IllegalArgumentException("用户不存在");
+            throw new IllegalArgumentException("用户不存在!");
         }
         int parentId = 0;
         if (user.getRole() == 1) {
@@ -226,46 +267,106 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             //user
             parentId = 1;
         }
+        NewTable humanTable = jwTableMapper.selectOne(new QueryWrapper<NewTable>().eq("tablename", tableConfig.gethumanTable()));
+        if(humanTable == null){
+            throw new IllegalArgumentException("人员主表不存在！");
+        }
+        List<NewColumn> humanColumns = newColumnMapper.selectList(new QueryWrapper<NewColumn>().eq("newtable_id", humanTable.getId()));
+        if(humanColumns.size() == 0){
+            throw new IllegalArgumentException("人员主表字段未维护！");
+        }
+        HashSet<String> humanFieldsSet = new HashSet<>();
+        String humanSelectFields = "";
+        for (NewColumn humanColumn : humanColumns) {
+            if(!humanColumn.getColumnname().equals(tableConfig.gethumanPk())){
+                humanFieldsSet.add(humanColumn.getComment());
+                humanSelectFields += " A.`"+humanColumn.getColumnname()+"` AS `"+humanColumn.getComment()+"`,";
+            }
+        }
         for (Integer fileId : fileIdArray) {
             NewTable selectTable = jwTableMapper.selectById(fileId);
-            String createTableQuery = newdbQueryService.getCreateTableQuery(selectTable.getTablename());
+            if(selectTable == null)
+                continue;
+            String tablename = selectTable.getTablename();
+            List<RelationOfNewtable> relationOfNewtables = relationOfNewtableMapper.selectList(new QueryWrapper<RelationOfNewtable>().eq("newtable_id", fileId));
+            if(relationOfNewtables.isEmpty()){
+                continue;
+            }
+            List<String> types = new ArrayList<>();
+            for (RelationOfNewtable relationOfNewtable : relationOfNewtables) {
+                types.add(relationOfNewtable.getLabel());
+            }
             String uuid = UUID.randomUUID().toString().replace("-", "");
-            String newTableName = selectTable.getTablename() + uuid;
-            createTableQuery = createTableQuery.replace("CREATE TABLE `"+selectTable.getTablename()+"`", "CREATE TABLE `"+newTableName+"`");
-
+            String newTableName = tablename + uuid;
+            String createTableQuery = "CREATE TABLE `"+newTableName+"` AS SELECT ";
             List<NewColumn> columns = newColumnMapper.selectList(new QueryWrapper<NewColumn>().eq("newtable_id", fileId));
-            for (NewColumn column : columns) {
-                String fieldName = "`"+column.getColumnname()+"`";
-                String newFieldName = "`"+column.getComment()+"`";
-                createTableQuery = createTableQuery.replace(fieldName,newFieldName);
+            if(columns.isEmpty()){
+                continue;
+            }
+            if(types.contains("human")){
+                // 人员类型的表需要关联人员主表
+                createTableQuery += humanSelectFields;
+
+                for (NewColumn column : columns) {
+                    String fieldName = column.getColumnname();
+                    String fieldAlias = column.getComment();
+                    if(!fieldName.equals("id") && !fieldName.equals("ID") && !fieldName.equals(tableConfig.getHumanFk()))
+                    {
+                        while(humanFieldsSet.contains(fieldAlias)){
+                            fieldAlias += "_1";
+                        }
+                        humanFieldsSet.add(fieldAlias);
+                        createTableQuery = createTableQuery + "B.`"+fieldName+"` AS `"+fieldAlias+"`,";
+                    }
+                }
+                createTableQuery = createTableQuery.substring(0,createTableQuery.length()-1);
+                createTableQuery = createTableQuery + " FROM newdb."+tableConfig.gethumanTable()+" A INNER JOIN newdb."+tablename+" B ON A."+tableConfig.gethumanPk()+"=B."+tableConfig.getHumanFk();
+
+            }
+            else{
+                HashSet<String> AliasSet = new HashSet<>();
+                for (NewColumn column : columns) {
+                    String fieldName = column.getColumnname();
+                    String fieldAlias = column.getComment();
+                    if(!fieldName.equals("id") && !fieldName.equals("ID") && !fieldName.equals(tableConfig.getHumanFk()))
+                    {
+                        while(AliasSet.contains(fieldAlias)){
+                            fieldAlias += "_1";
+                        }
+                        AliasSet.add(fieldAlias);
+                        createTableQuery = createTableQuery + "`"+fieldName+"` AS `"+fieldAlias+"`,";
+                    }
+                }
+                createTableQuery = createTableQuery.substring(0,createTableQuery.length()-1);
+                createTableQuery = createTableQuery + " FROM newdb."+tablename;
             }
 
             fileInfoMapper.createTableBySQL(createTableQuery);
 
-            List<Map<String, Object>> orinalData = newdbQueryService.queryForList(selectTable.getTablename());
-            int len = orinalData.size();
-            for (int i = 0; i < len / 100; i++) {
-                String datas = "";
-                for (int j = 0; j < 100; j++) {
-                    datas += "(";
-                    Map<String, Object> row = orinalData.get(i * 100 + j);
-                    for (String s : row.keySet()) {
-                        datas += "'" + row.get(s) + "',";
-                    }
-                    datas = datas.substring(0, datas.length() - 1) + "),";
-                }
-                datas = datas.substring(0, datas.length() - 1);
-                fileInfoMapper.insertData(newTableName, datas);
-            }
-            for (int k = (len / 100) * 100; k < len; k++) {
-                String datas = "(";
-                Map<String, Object> row = orinalData.get(k);
-                for (String s : row.keySet()) {
-                    datas += "'" + row.get(s) + "',";
-                }
-                datas = datas.substring(0, datas.length() - 1) + ")";
-                fileInfoMapper.insertData(newTableName, datas);
-            }
+//            List<Map<String, Object>> orinalData = newdbQueryService.queryForList(selectTable.getTablename());
+//            int len = orinalData.size();
+//            for (int i = 0; i < len / 100; i++) {
+//                String datas = "";
+//                for (int j = 0; j < 100; j++) {
+//                    datas += "(";
+//                    Map<String, Object> row = orinalData.get(i * 100 + j);
+//                    for (String s : row.keySet()) {
+//                        datas += "'" + row.get(s) + "',";
+//                    }
+//                    datas = datas.substring(0, datas.length() - 1) + "),";
+//                }
+//                datas = datas.substring(0, datas.length() - 1);
+//                fileInfoMapper.insertData(newTableName, datas);
+//            }
+//            for (int k = (len / 100) * 100; k < len; k++) {
+//                String datas = "(";
+//                Map<String, Object> row = orinalData.get(k);
+//                for (String s : row.keySet()) {
+//                    datas += "'" + row.get(s) + "',";
+//                }
+//                datas = datas.substring(0, datas.length() - 1) + ")";
+//                fileInfoMapper.insertData(newTableName, datas);
+//            }
             FileInfo fileInfo = new FileInfo();
             fileInfo.setParentId(parentId);
             fileInfo.setFileName(selectTable.getComment());
@@ -275,6 +376,13 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             fileInfo.setCreateBy(userId);
             fileInfo.setCreateTime(new Date());
             fileInfoMapper.insert(fileInfo);
+
+            Operlog operlog = new Operlog();
+            operlog.setUserId(userId);
+            operlog.setOperType(OperType.uploadFileOnline);
+            operlog.setOperData(selectTable.getComment());
+            operlog.setOperTime(new Date());
+            operlogMapper.insert(operlog);
         }
     }
 
@@ -301,8 +409,13 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
                 List<String> tableColumns = fileInfoMapper.getTableColumns(tableName);
                 List<List<Object>> lists = MapToList(dataList,tableColumns);
 
-
                 excelWriter.write(lists, EasyExcel.writerSheet(i++).build());
+                Operlog operlog = new Operlog();
+                operlog.setUserId(userId);
+                operlog.setOperType(OperType.exportFile);
+                operlog.setOperData(fileInfo.getFileName());
+                operlog.setOperTime(new Date());
+                operlogMapper.insert(operlog);
 
 
 //            try (ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -348,13 +461,36 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     }
 
     @Override
-    public List<OnlineFileVo> getOnlineFiles(Integer userId) {
+    public List<OnlineFileVo> getOnlineFiles(HttpServletRequest request) throws JsonProcessingException{
+        //从token得到创建者的userId
+        String token = request.getHeader("token");
+        String userInfo = JwtUtils.getUserInfoFromToken(token);
+        User loginUser = objectMapper.readValue(userInfo, User.class);
+        Integer userId = loginUser.getId();
+
         List<OnlineFileVo> onlineFiles = new ArrayList<>();
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("用户不存在!");
+        }
+        Integer departmentId = user.getDepartmentId();
+        List<UserTable> user_id = userTableMapper.selectList(new QueryWrapper<UserTable>().eq("user_id", userId));
+        List<DepartmentTable> department_id = departmentTableMapper.selectList(new QueryWrapper<DepartmentTable>().eq("department_id", departmentId));
+        Set<Integer> tableIds = new HashSet<>();
+        tableIds.add(-1);
+        for (UserTable userTable : user_id) {
+            tableIds.add(userTable.getNewTableId());
+        }
+        for (DepartmentTable departmentTable : department_id) {
+            tableIds.add(departmentTable.getNewtableId());
+        }
 
         List<NewTable> jwTables = jwTableMapper.selectList(null);
         for (NewTable jw : jwTables) {
-            OnlineFileVo onlineFileVo = new OnlineFileVo(jw.getId().toString(), jw.getComment());
-            onlineFiles.add(onlineFileVo);
+            if(tableIds.contains(jw.getId())){
+                OnlineFileVo onlineFileVo = new OnlineFileVo(jw.getId().toString(), jw.getComment());
+                onlineFiles.add(onlineFileVo);
+            }
         }
         return onlineFiles;
     }
@@ -363,7 +499,8 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     @Override
     public List<List<String>> queryFile(Integer userId, Integer fileId, String[] columnArray, String keyWord) {
         FileInfo fileInfo = fileInfoMapper.selectById(fileId);
-
+        if(fileInfo == null)
+            throw new IllegalArgumentException("文件不存在");
         List<LinkedHashMap<String, String>> dataList = fileInfoMapper.selectColumnsByParams(fileInfo.getTableName(), Arrays.stream(columnArray).toList(), keyWord);
         List<List<String>> result = new ArrayList<>();
 
@@ -389,6 +526,14 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             }
             result.add(tmp);
         }
+
+        Operlog operlog = new Operlog();
+        operlog.setUserId(userId);
+        operlog.setOperType(OperType.queryFile);
+        operlog.setOperData(fileInfo.getFileName()+":"+keyWord);
+        operlog.setOperTime(new Date());
+        operlogMapper.insert(operlog);
+
 //        String[] column = tableColumns.toArray(String[]::new);
 //
 //        res[0] = column;
@@ -414,6 +559,8 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             JSONObject field = new JSONObject();
             field.put("fileId",fileId);
             FileInfo fileInfo = fileInfoMapper.selectById(fileId);
+            if(fileInfo == null)
+                continue;
             List<Map<String,String>> tableColumns = fileInfoMapper.getTableAndColumns(fileInfo.getTableName());
             field.put("options",tableColumns);
             fields.add(field);
@@ -426,15 +573,24 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
         List<List<Object>> result = new ArrayList<>();
         List<Object> columns = new ArrayList<>();
         List<List<Object>> tmpResult = new ArrayList<>();
+        String fileNames = "";
 
         // 循环每一个文件
         for(int i = 0;i<fileIdArray.length;i++){
             // 第一个文件作为主文件
             if(i == 0){
                 FileInfo mainFileInfo = fileInfoMapper.selectById(fileIdArray[i]);
+                if(mainFileInfo == null)
+                    throw new IllegalArgumentException("选择的文件不存在！");
+                fileNames += mainFileInfo.getFileName();
                 List<LinkedHashMap<String,Object>> mainData = fileInfoMapper.getData(mainFileInfo.getTableName());
+                List<String> mainFileColumns = fileInfoMapper.getTableColumns(mainFileInfo.getTableName());
                 for (Map<String,Object> datum : mainData) {
-                    result.add(datum.values().stream().toList());
+                    List<Object> currentRow = new ArrayList<>();
+                    for (String mainFileColumn : mainFileColumns) {
+                        currentRow.add(datum.get(mainFileColumn)==null?"":datum.get(mainFileColumn));
+                    }
+                    result.add(currentRow);
                 }
                 List<Object> tableColumns = fileInfoMapper.getTableColumnsBySeq(mainFileInfo.getTableName(),String.valueOf(i+1));
                 for (Object tableColumn : tableColumns) {
@@ -443,14 +599,22 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             }
             else{
                 FileInfo compareTable = fileInfoMapper.selectById(fileIdArray[i]);
+                if(compareTable == null)
+                    throw new IllegalArgumentException("选择的文件不存在！");
+                fileNames += "-"+compareTable.getFileName();
                 List<LinkedHashMap<String,Object>> compareData = fileInfoMapper.getData(compareTable.getTableName());
+                List<String> originalCompareColumns = fileInfoMapper.getTableColumns(compareTable.getTableName());
                 List<Object> compareColumns = fileInfoMapper.getTableColumnsBySeq(compareTable.getTableName(),String.valueOf(i+1));
+                // 循环第一张表中的每一行
                 for (List<Object> resultRow : result) {
+                    // 循环第二张表中的每一行
                     for (Map<String,Object> compareDatum : compareData) {
                         boolean isMatch = true;
+                        // 循环每一对字段
                         for (int j = 0;j<fieldArray[0].length;j++) {
                             String field1 = "1-"+fieldArray[0][j];
                             String field2 = fieldArray[i][j];
+                            // 当前字段在第一张表中的序号
                             int fieldIndex1 = columns.indexOf(field1);
 //                            int fieldIndex2 = compareColumns.indexOf(field2);
                             if(fieldIndex1 < 0 ){
@@ -466,7 +630,9 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
                         if(isMatch) {
                             List<Object> tmp = new ArrayList<>();
                             tmp.addAll(resultRow);
-                            tmp.addAll(compareDatum.values());
+                            for (String originalCompareColumn : originalCompareColumns) {
+                                tmp.add(compareDatum.get(originalCompareColumn)==null?"":compareDatum.get(originalCompareColumn));
+                            }
                             tmpResult.add(tmp);
                         }
                     }
@@ -498,6 +664,14 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
         }
 
         result.add(0,returnColumns);
+
+        Operlog operlog = new Operlog();
+        operlog.setUserId(userId);
+        operlog.setOperType(OperType.compareFile);
+        operlog.setOperData(fileNames);
+        operlog.setOperTime(new Date());
+        operlogMapper.insert(operlog);
+
         return result;
 
 //        List<Set<Integer>> rowIndexes = new ArrayList<>();
@@ -610,15 +784,24 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     public List<List<Object>> compareFilesReverse(Integer userId, Integer[] fileIdArray, String[][] fieldArray, List<SaveFileIdVo> saveFieldArray) {
         List<List<Object>> result = new ArrayList<>();
         List<Object> columns = new ArrayList<>();
+        String fileNames = "";
 
         // 循环每一个文件
         for(int i = 0;i<fileIdArray.length;i++){
             // 第一个文件作为主文件
             if(i == 0){
                 FileInfo mainFileInfo = fileInfoMapper.selectById(fileIdArray[i]);
+                if(mainFileInfo == null)
+                    throw new IllegalArgumentException("选择的文件不存在！");
+                fileNames += mainFileInfo.getFileName();
                 List<LinkedHashMap<String,Object>> mainData = fileInfoMapper.getData(mainFileInfo.getTableName());
+                List<String> mainFileColumns = fileInfoMapper.getTableColumns(mainFileInfo.getTableName());
                 for (Map<String,Object> datum : mainData) {
-                    result.add(datum.values().stream().collect(Collectors.toList()));
+                    List<Object> currentRow = new ArrayList<>();
+                    for (String mainFileColumn : mainFileColumns) {
+                        currentRow.add(datum.get(mainFileColumn)==null?"":datum.get(mainFileColumn));
+                    }
+                    result.add(currentRow);
                 }
                 List<Object> tableColumns = fileInfoMapper.getTableColumnsAsObject(mainFileInfo.getTableName());
                 for (Object tableColumn : tableColumns) {
@@ -627,6 +810,9 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             }
             else{
                 FileInfo compareTable = fileInfoMapper.selectById(fileIdArray[i]);
+                if(compareTable == null)
+                    throw new IllegalArgumentException("选择的文件不存在！");
+                fileNames += "-"+compareTable.getFileName();
                 List<LinkedHashMap<String,Object>> compareData = fileInfoMapper.getData(compareTable.getTableName());
                 Iterator<List<Object>> iterator = result.iterator();
                 while(iterator.hasNext()){
@@ -676,6 +862,12 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             }
 
             result.add(0,returnColumns);
+            Operlog operlog = new Operlog();
+            operlog.setUserId(userId);
+            operlog.setOperType(OperType.compareFileReverse);
+            operlog.setOperData(fileNames);
+            operlog.setOperTime(new Date());
+            operlogMapper.insert(operlog);
             return result;
         }
     }
@@ -684,6 +876,8 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     public String[][] openFile(Integer userId, Integer fileId) {
         //获取表数据
         FileInfo fileInfo = fileInfoMapper.selectById(fileId);
+        if(fileInfo == null)
+            throw new IllegalArgumentException("选择的文件不存在！");
         //1. 获取表的所有字段（表头）
         List<String> tableColumns = fileInfoMapper.getTableColumns(fileInfo.getTableName());
         //2. 根据每个字段来获取字段下面的具体数据
@@ -705,12 +899,20 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
                 }
             }
         }
+        Operlog operlog = new Operlog();
+        operlog.setUserId(userId);
+        operlog.setOperType(OperType.openFile);
+        operlog.setOperData(fileInfo.getFileName());
+        operlog.setOperTime(new Date());
+        operlogMapper.insert(operlog);
         return result;
     }
 
     @Override
     public void saveFile(Integer userId, Integer fileId, String[][] content) {
         FileInfo fileInfo = fileInfoMapper.selectById(fileId);
+        if(fileInfo == null)
+            throw new IllegalArgumentException("保存的文件不存在！");
         //获取更新的数据
         List<List<String>> tableData = Arrays.stream(content).map(Arrays::asList).toList();
         //获取表的字段
@@ -728,6 +930,12 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
                 operationMapper.dynamicInsert(fileInfo.getTableName(), tableColumns, data.subList(0, tableColumns.size()));
             }
         }
+        Operlog operlog = new Operlog();
+        operlog.setUserId(userId);
+        operlog.setOperType(OperType.saveFile);
+        operlog.setOperData(fileInfo.getFileName());
+        operlog.setOperTime(new Date());
+        operlogMapper.insert(operlog);
     }
 
     @Override
@@ -755,7 +963,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
 
             User creator = userMapper.selectById(fileInfo.getCreateBy());
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            fileVos.add(new fileVo(fileInfo.getId(),fileInfo.getFileName(),fileType,creator.getUsername(),formatter.format(fileInfo.getCreateTime()),fileInfo.getStatus()==0?false:true));
+            fileVos.add(new fileVo(fileInfo.getId(),fileInfo.getFileName(),fileType,creator==null?"":creator.getUsername(),formatter.format(fileInfo.getCreateTime()),fileInfo.getStatus()==0?false:true));
         }
         return fileVos;
     }
@@ -795,6 +1003,13 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
         fileInfo.setCreateBy(userId);
         fileInfo.setCreateTime(new Date());
         fileInfoMapper.insert(fileInfo);
+
+        Operlog operlog = new Operlog();
+        operlog.setUserId(userId);
+        operlog.setOperType(OperType.saveFile);
+        operlog.setOperData(fileInfo.getFileName());
+        operlog.setOperTime(new Date());
+        operlogMapper.insert(operlog);
     }
 }
 

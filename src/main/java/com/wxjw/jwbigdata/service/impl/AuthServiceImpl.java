@@ -3,9 +3,14 @@ package com.wxjw.jwbigdata.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.wxjw.jwbigdata.common.OperType;
 import com.wxjw.jwbigdata.domain.Department;
+import com.wxjw.jwbigdata.domain.DepartmentTable;
+import com.wxjw.jwbigdata.domain.Operlog;
 import com.wxjw.jwbigdata.domain.User;
 import com.wxjw.jwbigdata.mapper.DepartmentMapper;
+import com.wxjw.jwbigdata.mapper.DepartmentTableMapper;
+import com.wxjw.jwbigdata.mapper.OperlogMapper;
 import com.wxjw.jwbigdata.mapper.UserMapper;
 import com.wxjw.jwbigdata.service.AuthService;
 import com.wxjw.jwbigdata.utils.RedisCache;
@@ -18,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,6 +44,10 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User>
     private PasswordEncoder passwordEncoder;
     @Resource
     private RedisCache redisCache;
+    @Resource
+    private OperlogMapper operlogMapper;
+    @Resource
+    private DepartmentTableMapper departmentTableMapper;
 
     @Override
     public UserInfoVo getMyInfo(Integer userId) {
@@ -57,7 +67,15 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User>
     public List<DeptVo> getDeptList() {
         List<Department> departments = departmentMapper.selectList(null);
         List<DeptVo> depts = new ArrayList<>();
-        departments.forEach(dept -> depts.add(new DeptVo(dept.getId(), dept.getName(),dept.getStatus()==0?true:false)));
+        departments.forEach(
+                dept -> {
+                    List<DepartmentTable> departmentIds = departmentTableMapper.selectList(new QueryWrapper<DepartmentTable>().eq("department_id", dept.getId()));
+                    ArrayList<Integer> tabIds = new ArrayList<>();
+                    for (DepartmentTable departmentId : departmentIds) {
+                        tabIds.add(departmentId.getNewtableId());
+                    }
+                    depts.add(new DeptVo(dept.getId(), dept.getName(),dept.getStatus()==0?true:false,tabIds));
+                });
         log.info("查询全部部门信息");
         return depts;
     }
@@ -68,12 +86,19 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User>
         if (loginUser == null) {
             throw new IllegalArgumentException("用户不存在，请重试！");
         }
-//        Department department = departmentMapper.selectOne(new QueryWrapper<Department>().eq("name", dept));
+
+        Department department = departmentMapper.selectOne(new QueryWrapper<Department>().eq("name", dept));
         userMapper.update(new UpdateWrapper<User>()
                 .eq("id", userId)
-                .set("department_id", dept)
+                .set("department_id", department == null ? 0 : department.getId())
                 .set("position", duties)
                 .set("phone", phone));
+        Operlog operlog = new Operlog();
+        operlog.setUserId(userId);
+        operlog.setOperType(OperType.updateMyInfo);
+        operlog.setOperData(dept+"-"+duties+"-"+phone);
+        operlog.setOperTime(new Date());
+        operlogMapper.insert(operlog);
         log.info("用户{}更新个人信息", loginUser.getUsername());
     }
 
@@ -94,6 +119,13 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User>
         userMapper.update(new UpdateWrapper<User>()
                 .eq("id" ,userId)
                 .set("password", passwordEncoder.encode(newPwd)));
+
+        Operlog operlog = new Operlog();
+        operlog.setUserId(userId);
+        operlog.setOperType(OperType.updateMyPwd);
+        operlog.setOperTime(new Date());
+        operlogMapper.insert(operlog);
+
         //删除token
         String token = request.getHeader("token");
         boolean result = redisCache.deleteObject("token:" + token);

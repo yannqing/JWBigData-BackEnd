@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wxjw.jwbigdata.mapper.UploadMapper">
+
+    <insert id="dynamicInsert">
+        INSERT INTO `${tableName}`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <foreach collection="columns" item="column" separator=",">
+                `${column}`
+            </foreach>
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <foreach collection="values" item="value" separator=",">
+                #{value}
+            </foreach>
+        </trim>
+    </insert>
+</mapper>

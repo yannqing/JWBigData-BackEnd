@@ -18,21 +18,23 @@ public interface UserService extends IService<User> {
 
     List<UserVo> getUserList();
 
-    void addUser(String userName, String realName, String dept, String duties, String phone, HttpServletRequest request) throws JsonProcessingException;
+    void addUser(String userName, String realName, String dept, String duties, String phone,List<Integer> selectedTables, HttpServletRequest request) throws JsonProcessingException;
 
-    void switchUserStatus(int userId, int status);
+    void updateUserInfo(int userId,String dept, String duties, String phone,List<Integer> selectedTables, HttpServletRequest request) throws JsonProcessingException;
 
-    void switchDeptStatus(int deptId, int status);
+    void switchUserStatus(int userId, int status, HttpServletRequest request) throws JsonProcessingException;
 
-    void delUser(int[] userId);
+    void switchDeptStatus(int deptId, int status, HttpServletRequest request) throws JsonProcessingException;
 
-    void delDept(int[] deptId);
+    void delUser(int[] userId, HttpServletRequest request) throws JsonProcessingException;
 
-    void initPwd(int[] userId);
+    void delDept(int[] deptId, HttpServletRequest request) throws JsonProcessingException;
 
-    void switchUserAuth(Integer userId, Boolean[] auth);
+    void initPwd(int[] userId, HttpServletRequest request) throws JsonProcessingException;
 
-    void addDept(String deptName, HttpServletRequest request) throws JsonProcessingException;
+    void switchUserAuth(Integer userId, Boolean[] auth, HttpServletRequest request) throws JsonProcessingException;
 
-    void updataDeptInfo(int deptId, String deptName);
+    void addDept(String deptName,List<Integer> selectedTables, HttpServletRequest request) throws JsonProcessingException;
+
+    void updataDeptInfo(int deptId, String deptName,List<Integer> selectedTables, HttpServletRequest request) throws JsonProcessingException;
 }

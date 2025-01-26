@@ -1,6 +1,7 @@
 package com.wxjw.jwbigdata.controller;
 
 import com.alibaba.fastjson.JSONArray;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wxjw.jwbigdata.common.Code;
 import com.wxjw.jwbigdata.service.FileInfoService;
 import com.wxjw.jwbigdata.utils.ResultUtils;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.sql.SQLSyntaxErrorException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,13 +43,19 @@ public class FileController {
     public BaseResponse<Object> uploadFile(@RequestParam("file") MultipartFile file, Integer userId) {
         String fileName = file.getOriginalFilename();
         String fileType = extractFileNameWithExtension(file);
+        if(!fileType.equals("xlsx") && !fileType.equals("xls") && !fileType.equals("XLSX") && !fileType.equals("XLS") ){
+            return ResultUtils.failure(Code.FAILURE, null, "请上传excel文件！");
+        }
         try{
-            fileInfoService.uploadFile(file, fileName, fileType, userId);
+            fileInfoService.uploadFile(file, fileName, userId);
         }
         catch(BadSqlGrammarException ex){
             return ResultUtils.failure(Code.FAILURE, null, ex.getMessage());
         }
         catch (IOException ex){
+            return ResultUtils.failure(Code.FAILURE, null, ex.getMessage());
+        }
+        catch (IllegalArgumentException ex){
             return ResultUtils.failure(Code.FAILURE, null, ex.getMessage());
         }
         return ResultUtils.success(Code.SUCCESS, null, "文件上传成功");
@@ -61,7 +69,7 @@ public class FileController {
         if (originalFilename == null) {
             return null;
         }
-        return originalFilename.substring(originalFilename.lastIndexOf("/") + 1);
+        return originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
     }
 
     /**
@@ -71,9 +79,9 @@ public class FileController {
      * @return
      */
     @PostMapping("/delFile")
-    public BaseResponse<Object> delFile(@RequestBody LinkedHashMap<String, List<String>> fileId) {
+    public BaseResponse<Object> delFile(@RequestBody LinkedHashMap<String, List<String>> fileId, HttpServletRequest request) throws JsonProcessingException {
         List<String> fileIds = fileId.get("fileId");
-        fileInfoService.delFile(fileIds.toArray(new String[fileIds.size()]));
+        fileInfoService.delFile(fileIds.toArray(new String[fileIds.size()]), request);
         return ResultUtils.success(Code.SUCCESS, null, "删除数据成功！");
     }
 
@@ -83,10 +91,10 @@ public class FileController {
      * @return
      */
     @PostMapping("/switchFileStatus")
-    public BaseResponse<Object> switchFileStatus(@RequestBody Map<String,Object> data) {
+    public BaseResponse<Object> switchFileStatus(@RequestBody Map<String,Object> data, HttpServletRequest request) throws JsonProcessingException{
         Integer fileId = (Integer)data.get("fileId");
         Boolean status = (Boolean)data.get("status");
-        fileInfoService.switchFileStatus(status==true?1:0, fileId);
+        fileInfoService.switchFileStatus(status==true?1:0, fileId,request);
         return ResultUtils.success(Code.SUCCESS, null, "更改文件显示状态成功");
     }
 
@@ -94,12 +102,12 @@ public class FileController {
     /**
      * 获取在线文件 ok
      *
-     * @param userId
+     * @param request
      * @return
      */
     @GetMapping("/getOnlineFiles")
-    public BaseResponse<List<OnlineFileVo>> getOnlineFiles(Integer userId) {
-        List<OnlineFileVo> onlineFileVos = fileInfoService.getOnlineFiles(userId);
+    public BaseResponse<List<OnlineFileVo>> getOnlineFiles(HttpServletRequest request) throws JsonProcessingException{
+        List<OnlineFileVo> onlineFileVos = fileInfoService.getOnlineFiles(request);
         return ResultUtils.success(Code.SUCCESS, onlineFileVos, "获取在线文件成功！");
     }
 
@@ -123,7 +131,7 @@ public class FileController {
      * @return
      */
     @PostMapping("/uploadFileOnline")
-    public BaseResponse<Object> uploadFileOnline(@RequestBody fileData data) {
+    public BaseResponse<Object> uploadFileOnline(@RequestBody fileData data){
 
         fileInfoService.uploadFileOnline(data.getUserId(), data.getFileIdArray());
         return ResultUtils.success(Code.SUCCESS, null, "导入在线文件成功！");
@@ -164,7 +172,7 @@ public class FileController {
      * @return 返回文件的二进制流
      */
     @PostMapping("/exportFile")
-    public void exportFile(@RequestBody fileData data, HttpServletResponse response) {
+    public void exportFile(@RequestBody fileData data, HttpServletResponse response){
         try {
             fileInfoService.exportFile(data.getUserId(), data.getFileIdArray(), response);
         }

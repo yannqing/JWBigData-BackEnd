@@ -13,6 +13,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class AuthController {
@@ -23,7 +24,6 @@ public class AuthController {
     @GetMapping("/getMyInfo")
     public BaseResponse<UserInfoVo> getMyInfo(Integer userId) {
         UserInfoVo myInfo = userService.getMyInfo(userId);
-
         return ResultUtils.success(Code.SUCCESS, myInfo, "获取个人信息成功");
     }
 
@@ -34,7 +34,8 @@ public class AuthController {
     }
 
     @PostMapping("/updateMyInfo")
-    public BaseResponse<Object> updateMyInfo(@RequestBody UserVo userInfo){
+    public BaseResponse<Object> updateMyInfo(@RequestBody Map<String,UserVo> data){
+        UserVo userInfo = data.get("userInfo");
         userService.updateMyInfo(userInfo.getUserId(), userInfo.getDept(), userInfo.getDuties(), userInfo.getPhone());
         return ResultUtils.success();
     }

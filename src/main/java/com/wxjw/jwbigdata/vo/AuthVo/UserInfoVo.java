@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,6 +17,7 @@ public class UserInfoVo {
     private String dept;
     private String duties;
     private String phone;
+    private List<Integer> selectedTables;
 
     public UserInfoVo(User user, String dept) {
         this.userName = String.valueOf(user.getUserAccount());

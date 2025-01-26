@@ -18,23 +18,23 @@ import java.util.List;
 * @createDate 2024-06-14 14:06:48
 */
 public interface JwRuleService extends IService<JwRule> {
-    void addRule(Integer userId, String ruleName,String ruleComment, String ruleSteps) throws JsonProcessingException;
+    void addRule(Integer userId, String ruleName,String ruleComment, String ruleSteps);
 
-    void delRule(String[] ruleId);
+    void delRule(String[] ruleId,HttpServletRequest request) throws JsonProcessingException;
 
-    void switchRuleStatus(Integer ruleId, Integer status);
+    void switchRuleStatus(Integer ruleId, Integer status,HttpServletRequest request) throws JsonProcessingException;
 
     List<RuleVo> getRuleList();
 
-    void editRule(Integer ruleId, String ruleName, String ruleComment, String ruleSteps);
+    void editRule(Integer ruleId, String ruleName, String ruleComment, String ruleSteps, HttpServletRequest request) throws JsonProcessingException;
 
     JSONObject getRules(String userId);
 
     RuleVo getRuleInfo(String ruleId);
 
-    void switchRuleOn(String ruleId, Integer isOn);
+    void switchRuleOn(String ruleId, Integer isOn, HttpServletRequest request) throws JsonProcessingException;
 
-    JSONObject getRuleResult(String ruleId);
+    JSONObject getRuleResult(String ruleId, HttpServletRequest request) throws JsonProcessingException;
 
     JSONArray getResultDetail(String ruleId,String id);
 

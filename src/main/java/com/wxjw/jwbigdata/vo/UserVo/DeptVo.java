@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author black
@@ -25,6 +26,9 @@ public class DeptVo implements Serializable{
     private String deptName;
 
     private Boolean status;
+
+
+    private List<Integer> selectedTables;
 
     public int getDeptId() {
         return deptId;

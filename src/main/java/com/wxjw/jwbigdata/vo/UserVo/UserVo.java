@@ -20,8 +20,9 @@ public class UserVo {
     private String phone;
     private boolean status;
     private ArrayList<Boolean> auth;
+    private List<Integer> selectedTables;
 
-    public UserVo(User user, String dept) {
+    public UserVo(User user, String dept,List<Integer> selectedTables) {
         this.userId = user.getId();
         this.userName = user.getUserAccount();
         this.realName = user.getUsername();
@@ -34,7 +35,9 @@ public class UserVo {
         auth = new ArrayList<>();
         this.auth.add(user.getRole()==0?false:true);
         this.auth.add(user.getPortrait()==0?false:true);
+        this.auth.add(user.getSearch()==0?false:true);
         this.auth.add(user.getCompare()==0?false:true);
         this.auth.add(user.getModel()==0?false:true);
+        this.selectedTables = selectedTables;
     }
 }

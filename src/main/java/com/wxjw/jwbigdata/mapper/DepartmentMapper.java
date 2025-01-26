@@ -2,6 +2,7 @@ package com.wxjw.jwbigdata.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.wxjw.jwbigdata.domain.Department;
+import org.apache.ibatis.annotations.Options;
 
 
 /**
@@ -11,7 +12,8 @@ import com.wxjw.jwbigdata.domain.Department;
 * @Entity generator.domain.Department
 */
 public interface DepartmentMapper extends BaseMapper<Department> {
-
+    @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
+    int insert(Department department);
 }
 
 

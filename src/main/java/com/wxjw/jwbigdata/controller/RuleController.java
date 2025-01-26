@@ -42,7 +42,7 @@ public class RuleController {
 
 
     @PostMapping("/addRule")
-    public BaseResponse<Object> addRule(@RequestBody RuleInfoVo ruleInfo) throws JsonProcessingException {
+    public BaseResponse<Object> addRule(@RequestBody RuleInfoVo ruleInfo){
         Integer userId = ruleInfo.getUserId();
         RuleVo ruleVo = ruleInfo.getRuleInfo();
         jwRuleService.addRule(userId,ruleVo.getRuleName(),ruleVo.getRuleComment(),ruleVo.getRuleSteps());
@@ -51,15 +51,15 @@ public class RuleController {
     }
 
     @PostMapping("delRule")
-    public BaseResponse<Object> delRule(@RequestBody LinkedHashMap<String, List<String>> ruleId){
+    public BaseResponse<Object> delRule(@RequestBody LinkedHashMap<String, List<String>> ruleId, HttpServletRequest request) throws JsonProcessingException{
         List<String> ruleIds = ruleId.get("ruleId");
-        jwRuleService.delRule(ruleIds.toArray(new String[ruleIds.size()]));
+        jwRuleService.delRule(ruleIds.toArray(new String[ruleIds.size()]),request);
         return ResultUtils.success(Code.SUCCESS, null, "删除规则成功！");
     }
 
     @PostMapping("/switchRuleStatus")
-    public BaseResponse<Object> switchRuleStatus(@RequestBody Map<String,Object> data) {
-        jwRuleService.switchRuleStatus((Integer)data.get("ruleId"), (Boolean)data.get("status")==true?1:0);
+    public BaseResponse<Object> switchRuleStatus(@RequestBody Map<String,Object> data, HttpServletRequest request) throws JsonProcessingException{
+        jwRuleService.switchRuleStatus((Integer)data.get("ruleId"), (Boolean)data.get("status")==true?1:0,request);
         return ResultUtils.success(Code.SUCCESS, null, "修改规则状态成功");
     }
 
@@ -71,8 +71,8 @@ public class RuleController {
     }
 
     @PostMapping("/editRule")
-    public BaseResponse<Object> editRule(Integer ruleId, String ruleName, String ruleComment, String ruleSteps){
-        jwRuleService.editRule(ruleId, ruleName, ruleComment, ruleSteps);
+    public BaseResponse<Object> editRule(Integer ruleId, String ruleName, String ruleComment, String ruleSteps, HttpServletRequest request) throws JsonProcessingException{
+        jwRuleService.editRule(ruleId, ruleName, ruleComment, ruleSteps,request);
         return ResultUtils.success(Code.SUCCESS, null, "修改规则成功");
     }
 
@@ -107,8 +107,8 @@ public class RuleController {
     }
 
     @PostMapping("/switchRuleOn")
-    public BaseResponse<Object> switchRuleOn(String ruleId, Integer isOn) {
-        jwRuleService.switchRuleOn(ruleId, isOn);
+    public BaseResponse<Object> switchRuleOn(String ruleId, Integer isOn, HttpServletRequest request) throws JsonProcessingException{
+        jwRuleService.switchRuleOn(ruleId, isOn,request);
         return ResultUtils.success(Code.SUCCESS, null, "修改规则启用状态成功");
     }
 
@@ -119,17 +119,19 @@ public class RuleController {
 //    }
 
     @PostMapping("/getRuleResult")
-    public BaseResponse<JSONObject> getRuleResult(String ruleId,String userid) {
+    public BaseResponse<JSONObject> getRuleResult(String ruleId,String userid, HttpServletRequest request) throws JsonProcessingException{
         JwRule rule = jwRuleService.getRuleById(ruleId);
+        // 未启用的
         if(rule.getIsOn() == 0 || rule.getResultTable()== null || rule.getResultTable().isEmpty()){
-            jwRuleService.switchRuleOn(ruleId,1);
-            return ResultUtils.failure(Code.FAILURE,null,"首次运行规则需要时间较长，请耐心等待一段时间再来查看！");
+            jwRuleService.switchRuleOn(ruleId,1,request);
+            return ResultUtils.failure(Code.FAILURE,null,"模型正在分析中，请耐心等待一段时间再来查看！");
         }
+        // 已启用的
         else if(rule.getIsOn() == 1){
-            JSONObject result = jwRuleService.getRuleResult(ruleId);
+            JSONObject result = jwRuleService.getRuleResult(ruleId,request);
             return ResultUtils.success(Code.SUCCESS, result, "获取模型分析详情结果");
         }
-        else return ResultUtils.failure(Code.FAILURE,null,"首次运行规则需要时间较长，请耐心等待一段时间再来查看！");
+        else return ResultUtils.failure(Code.FAILURE,null,"模型正在分析中，请耐心等待一段时间再来查看！");
 
     }
 }
