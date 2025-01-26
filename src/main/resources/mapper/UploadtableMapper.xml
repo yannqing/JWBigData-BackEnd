@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wxjw.jwbigdata.mapper.UploadtableMapper">
+
+    <resultMap id="BaseResultMap" type="com.wxjw.jwbigdata.domain.Uploadtable">
+            <id property="id" column="Id" jdbcType="INTEGER"/>
+            <result property="source" column="source" jdbcType="VARCHAR"/>
+            <result property="dbname" column="dbname" jdbcType="VARCHAR"/>
+            <result property="tablename" column="tablename" jdbcType="VARCHAR"/>
+            <result property="comment" column="comment" jdbcType="VARCHAR"/>
+            <result property="done" column="done" jdbcType="VARCHAR"/>
+            <result property="descript" column="descript" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        Id,source,dbname,
+        tablename,comment,done,
+        descript
+    </sql>
+</mapper>
